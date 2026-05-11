@@ -12,14 +12,11 @@ bcrypt = Bcrypt(app)
 
 with app.app_context():
 
-    # DROP ALL TABLES
     db.drop_all()
 
-    # CREATE ALL TABLES AGAIN
     db.create_all()
 
 
-    # CREATE ADMIN
     existing = User.query.filter_by(
         username="mahmood"
     ).first()
@@ -31,7 +28,7 @@ with app.app_context():
             username="mahmood",
 
             password=bcrypt.generate_password_hash(
-                "mahmood123"
+                "tradezone786"
             ).decode("utf-8"),
 
             role="admin"

@@ -1,39 +1,46 @@
-from flask import Blueprint
-from flask import render_template
-from flask import request
-from flask import redirect
-from flask import url_for
-from flask import flash
-from flask import send_file
-
+from flask import Blueprint, render_template, request, redirect, send_file
 from flask_login import login_required
-
-from app import db
-
-from app.models import Expense
-from app.models import Site
-from app.models import Labour
-
+from app.models import db, Expense, Site, Labour
+from datetime import datetime
 import pandas as pd
+from reportlab.platypus import SimpleDocTemplate, Table
+from reportlab.lib.pagesizes import letter
+import os
 
-from io import BytesIO
-
-
-expenses = Blueprint(
-    "expenses",
-    __name__
-)
+expenses = Blueprint("expenses", __name__)
 
 
 @expenses.route("/expenses")
 @login_required
 def view_expenses():
 
-    expenses_data = Expense.query.all()
+    site_id = request.args.get("site_id")
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
 
-    labour_data = Labour.query.all()
+    query = Expense.query
 
-    sites = Site.query.all()
+    if site_id and site_id != "all":
+        query = query.filter_by(site_id=site_id)
+
+    if start_date:
+        query = query.filter(
+            Expense.date >= datetime.strptime(start_date, "%Y-%m-%d").date()
+        )
+
+    if end_date:
+        query = query.filter(
+            Expense.date <= datetime.strptime(end_date, "%Y-%m-%d").date()
+        )
+
+    expenses_data = query.order_by(Expense.id.desc()).all()
+
+    labour_query = Labour.query
+
+    if site_id and site_id != "all":
+        labour_query = labour_query.filter_by(site_id=site_id)
+
+    labour_data = labour_query.all()
 
     total_expense = sum(
         float(expense.amount or 0)
@@ -41,107 +48,86 @@ def view_expenses():
     )
 
     labour_total = sum(
-        float(worker.hourly_rate or 0)
+        float(worker.total_amount or 0)
         for worker in labour_data
     )
 
-    net_total = (
-        total_expense +
-        labour_total
-    )
+    net_total = total_expense + labour_total
+
+    sites = Site.query.all()
 
     return render_template(
-
         "expenses.html",
-
         expenses=expenses_data,
-
-        labour_data=labour_data,
-
         sites=sites,
-
         total_expense=total_expense,
-
         labour_total=labour_total,
-
         net_total=net_total
     )
 
 
-@expenses.route(
-    "/add_expense",
-    methods=["GET", "POST"]
-)
+@expenses.route("/add_expense", methods=["GET", "POST"])
 @login_required
 def add_expense():
 
-    sites = Site.query.all()
-
     if request.method == "POST":
 
+        receipt = request.files.get("receipt")
+
+        filename = None
+
+        if receipt and receipt.filename != "":
+
+            os.makedirs("app/static/receipts", exist_ok=True)
+
+            filename = (
+                str(datetime.now().timestamp()).replace(".", "")
+                + "_"
+                + receipt.filename
+            )
+
+            receipt.save(
+                os.path.join("app/static/receipts", filename)
+            )
+
         expense = Expense(
-
             site_id=request.form["site_id"],
-
             category=request.form["category"],
-
             description=request.form["description"],
-
             amount=request.form["amount"],
-
-            date=request.form["date"]
+            date=datetime.strptime(
+                request.form["date"],
+                "%Y-%m-%d"
+            ).date(),
+            receipt=filename
         )
 
         db.session.add(expense)
-
         db.session.commit()
 
-        flash(
-            "Expense added successfully"
-        )
+        return redirect("/expenses")
 
-        return redirect(
-            url_for(
-                "expenses.view_expenses"
-            )
-        )
+    sites = Site.query.all()
 
     return render_template(
-
         "add_expense.html",
-
         sites=sites
     )
 
 
-@expenses.route(
-    "/delete_expense/<int:expense_id>"
-)
+@expenses.route("/delete_expense/<int:id>")
 @login_required
-def delete_expense(expense_id):
+def delete_expense(id):
 
-    expense = Expense.query.get_or_404(
-        expense_id
-    )
+    expense = Expense.query.get_or_404(id)
 
     db.session.delete(expense)
-
     db.session.commit()
 
-    flash(
-        "Expense deleted successfully"
-    )
-
-    return redirect(
-        url_for(
-            "expenses.view_expenses"
-        )
-    )
+    return redirect("/expenses")
 
 
-@expenses.route(
-    "/export_expenses_excel"
-)
+@expenses.route("/export_expenses_excel")
 @login_required
 def export_expenses_excel():
 
@@ -152,51 +138,63 @@ def export_expenses_excel():
     for expense in expenses_data:
 
         data.append({
-
-            "Site":
-            expense.site.name
-            if expense.site else "",
-
-            "Category":
-            expense.category,
-
-            "Description":
-            expense.description,
-
-            "Amount":
-            expense.amount,
-
-            "Date":
-            expense.date
+            "Site": expense.site.name if expense.site else "",
+            "Category": expense.category,
+            "Description": expense.description,
+            "Amount": expense.amount,
+            "Date": expense.date
         })
 
     df = pd.DataFrame(data)
 
-    output = BytesIO()
+    file_path = "expenses.xlsx"
 
-    with pd.ExcelWriter(
-        output,
-        engine="openpyxl"
-    ) as writer:
-
-        df.to_excel(
-            writer,
-            index=False,
-            sheet_name="Expenses"
-        )
-
-    output.seek(0)
+    df.to_excel(file_path, index=False)
 
     return send_file(
+        file_path,
+        as_attachment=True
+    )
 
-        output,
 
-        as_attachment=True,
+@expenses.route("/export_expenses_pdf")
+@login_required
+def export_expenses_pdf():
 
-        download_name="expenses.xlsx",
+    expenses_data = Expense.query.all()
 
-        mimetype=(
-            "application/vnd.openxmlformats-"
-            "officedocument.spreadsheetml.sheet"
-        )
+    file_path = "expenses.pdf"
+
+    pdf = SimpleDocTemplate(
+        file_path,
+        pagesize=letter
+    )
+
+    data = [[
+        "Site",
+        "Category",
+        "Description",
+        "Amount",
+        "Date"
+    ]]
+
+    for expense in expenses_data:
+
+        data.append([
+            expense.site.name if expense.site else "",
+            expense.category,
+            expense.description,
+            str(expense.amount),
+            str(expense.date)
+        ])
+
+    table = Table(data)
+
+    elements = [table]
+
+    pdf.build(elements)
+
+    return send_file(
+        file_path,
+        as_attachment=True
     )

@@ -19,22 +19,16 @@
 
         <div class="form-group">
 
-            <label>
-                Site
-            </label>
+            <label>Site</label>
 
             <select name="site_id">
 
-                <option value="all">
-                    All Sites
-                </option>
+                <option value="all">All Sites</option>
 
                 {% for site in sites %}
 
                 <option value="{{ site.id }}">
-
                     {{ site.name }}
-
                 </option>
 
                 {% endfor %}
@@ -46,65 +40,71 @@
 
         <div class="form-group">
 
-            <label>
-                From
-            </label>
+            <label>From</label>
 
-            <input
-                type="date"
-                name="start_date"
-            >
+            <input type="date" name="start_date">
 
         </div>
 
 
         <div class="form-group">
 
-            <label>
-                To
-            </label>
+            <label>To</label>
 
-            <input
-                type="date"
-                name="end_date"
-            >
+            <input type="date" name="end_date">
 
         </div>
 
 
-        <button type="submit" class="btn">
+        <div class="form-group">
 
-            Apply
+            <label>&nbsp;</label>
 
-        </button>
+            <button type="submit" class="btn">
+                Apply
+            </button>
+
+        </div>
 
     </form>
 
 </div>
 
 
-<div class="card">
+<div class="card total-card">
 
     <h2>
-
-        Net Expenses:
-        BD {{ "%.2f"|format(net_total) }}
-
+        Net Expenses: BD {{ "%.2f"|format(net_total) }}
     </h2>
 
-    <p>
+    <div class="totals-grid">
 
-        Including Labour Cost:
-        BD {{ "%.2f"|format(labour_total) }}
+        <div class="total-box">
 
-    </p>
+            <span class="total-label">
+                Labour Cost
+            </span>
 
-    <p>
+            <span class="total-value">
+                BD {{ "%.2f"|format(labour_total) }}
+            </span>
 
-        Material / Expense Cost:
-        BD {{ "%.2f"|format(total_expense) }}
+        </div>
 
-    </p>
+
+        <div class="total-box">
+
+            <span class="total-label">
+                Material / Expense Cost
+            </span>
+
+            <span class="total-value">
+                BD {{ "%.2f"|format(total_expense) }}
+            </span>
+
+        </div>
+
+    </div>
 
 </div>
 
@@ -118,27 +118,17 @@
             <tr>
 
                 <th>ID</th>
-
                 <th>Site</th>
-
                 <th>Category</th>
-
                 <th>Description</th>
-
                 <th>Amount</th>
-
                 <th>Date</th>
-
                 <th>Receipt</th>
-
-                <th style="text-align:center;">
-                    Delete
-                </th>
+                <th>Delete</th>
 
             </tr>
 
         </thead>
-
 
         <tbody>
 
@@ -146,9 +136,7 @@
 
             <tr>
 
-                <td>
-                    {{ expense.id }}
-                </td>
+                <td>{{ expense.id }}</td>
 
                 <td>
 
@@ -164,21 +152,13 @@
 
                 </td>
 
-                <td>
-                    {{ expense.category }}
-                </td>
+                <td>{{ expense.category }}</td>
 
-                <td>
-                    {{ expense.description }}
-                </td>
+                <td>{{ expense.description }}</td>
 
-                <td>
-                    BD {{ expense.amount }}
-                </td>
+                <td>BD {{ "%.2f"|format(expense.amount) }}</td>
 
-                <td>
-                    {{ expense.date }}
-                </td>
+                <td>{{ expense.date }}</td>
 
                 <td>
 
@@ -199,16 +179,14 @@
 
                 </td>
 
-                <td style="text-align:center;">
+                <td>
 
                     <a
                         href="/delete_expense/{{ expense.id }}"
                         class="delete-btn"
                         onclick="return confirm('Delete this expense?')"
                     >
-
                         Delete
-
                     </a>
 
                 </td>
@@ -224,35 +202,131 @@
 </div>
 
 
-<div
-    style="
-        display:flex;
-        gap:15px;
-        margin-top:20px;
-    "
->
+<div class="export-buttons">
 
     <a
         href="/export_expenses_excel"
-        class="btn"
-        style="background:#10b981;"
+        class="btn export-green"
     >
-
         Export Excel
-
     </a>
 
 
     <a
         href="/export_expenses_pdf"
-        class="btn"
-        style="background:#ef4444;"
+        class="btn export-red"
     >
-
         Export PDF
-
     </a>
 
 </div>
+
+
+<style>
+
+.page-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+}
+
+.filter-form{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+    align-items:end;
+}
+
+.form-group{
+    display:flex;
+    flex-direction:column;
+}
+
+.form-group label{
+    margin-bottom:8px;
+    font-weight:600;
+    color:#ffffff;
+}
+
+.total-card h2{
+    margin-bottom:25px;
+}
+
+.totals-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.total-box{
+    background:#111827;
+    border:1px solid #1f2937;
+    border-radius:14px;
+    padding:20px;
+}
+
+.total-label{
+    display:block;
+    color:#9ca3af;
+    margin-bottom:10px;
+}
+
+.total-value{
+    font-size:28px;
+    font-weight:700;
+    color:white;
+}
+
+.export-buttons{
+    display:flex;
+    gap:15px;
+    margin-top:20px;
+}
+
+.export-green{
+    background:#10b981;
+}
+
+.export-red{
+    background:#ef4444;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th, td{
+    padding:16px;
+    text-align:left;
+}
+
+.delete-btn{
+    background:#ef4444;
+    color:white;
+    padding:8px 14px;
+    border-radius:8px;
+    text-decoration:none;
+    font-weight:600;
+}
+
+.delete-btn:hover{
+    opacity:0.9;
+}
+
+@media(max-width:1000px){
+
+    .filter-form{
+        grid-template-columns:1fr;
+    }
+
+    .totals-grid{
+        grid-template-columns:1fr;
+    }
+
+}
+
+</style>
 
 {% endblock %}

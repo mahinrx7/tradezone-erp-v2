@@ -1,6 +1,6 @@
 from app import create_app, db
 
-from app.models import User
+from app.models import *
 
 from flask_bcrypt import Bcrypt
 
@@ -12,9 +12,14 @@ bcrypt = Bcrypt(app)
 
 with app.app_context():
 
+    # DROP ALL TABLES
+    db.drop_all()
+
+    # CREATE ALL TABLES AGAIN
     db.create_all()
 
-    # CREATE ADMIN IF NOT EXISTS
+
+    # CREATE ADMIN
     existing = User.query.filter_by(
         username="mahmood"
     ).first()

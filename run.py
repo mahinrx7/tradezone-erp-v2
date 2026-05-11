@@ -1,6 +1,6 @@
 from app import create_app, db
 
-from app.models import *
+from app.models import User
 
 from flask_bcrypt import Bcrypt
 
@@ -12,11 +12,9 @@ bcrypt = Bcrypt(app)
 
 with app.app_context():
 
-    db.drop_all()
-
     db.create_all()
 
-
+    # CREATE ADMIN IF NOT EXISTS
     existing = User.query.filter_by(
         username="mahmood"
     ).first()
@@ -28,7 +26,7 @@ with app.app_context():
             username="mahmood",
 
             password=bcrypt.generate_password_hash(
-                "tradezone786"
+                "mahmood123"
             ).decode("utf-8"),
 
             role="admin"

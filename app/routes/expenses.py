@@ -48,7 +48,7 @@ def view_expenses():
     )
 
     labour_total = sum(
-        float(worker.total_amount or 0)
+        float(worker.hourly_rate or 0)
         for worker in labour_data
     )
 

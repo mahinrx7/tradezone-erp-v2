@@ -104,7 +104,7 @@
 
 <div class="card">
 
-    <table>
+    <table class="table table-dark table-hover">
 
         <thead>
 
@@ -155,10 +155,10 @@
 
                 <td>
 
-                    {% if expense.receipt %}
+                    {% if expense.receipt_image %}
 
                     <a
-                        href="{{ url_for('static', filename='receipts/' + expense.receipt) }}"
+                        href="{{ url_for('static', filename='receipts/' + expense.receipt_image) }}"
                         target="_blank"
                     >
                         View

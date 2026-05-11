@@ -101,7 +101,7 @@ def add_expense():
                 request.form["date"],
                 "%Y-%m-%d"
             ).date(),
-            receipt=filename
+            receipt_image=filename
         )
 
         db.session.add(expense)

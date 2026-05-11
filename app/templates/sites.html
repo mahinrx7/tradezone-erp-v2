@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h1>
+
+        Sites
+
+    </h1>
+
+    <a href="/add_site"
+       class="btn btn-primary">
+
+        Add Site
+
+    </a>
+
+</div>
+
+<div class="card p-4">
+
+    <div class="table-responsive">
+
+        <table class="table table-dark table-hover align-middle">
+
+            <thead>
+
+                <tr>
+
+                    <th>ID</th>
+
+                    <th>Site</th>
+
+                    <th>Client</th>
+
+                    <th>Contract</th>
+
+                    <th>Edit</th>
+
+                    <th>Delete</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for site in sites %}
+
+                <tr>
+
+                    <td>
+
+                        {{ site.id }}
+
+                    </td>
+
+                    <td>
+
+                        {{ site.name }}
+
+                    </td>
+
+                    <td>
+
+                        {{ site.client_name }}
+
+                    </td>
+
+                    <td>
+
+                        BD {{ site.contract_amount }}
+
+                    </td>
+
+                    <td>
+
+                        <a href="/edit_site/{{ site.id }}"
+                           class="btn btn-sm btn-warning">
+
+                            Edit
+
+                        </a>
+
+                    </td>
+
+                    <td>
+
+                        <a href="/delete_site/{{ site.id }}"
+                           class="btn btn-sm btn-danger">
+
+                            Delete
+
+                        </a>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

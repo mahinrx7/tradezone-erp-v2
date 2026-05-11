@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1 class="mb-4">
+Analytics
+</h1>
+
+<div class="card p-4 mb-4">
+
+<form method="GET"
+      action="/analytics">
+
+<div class="row g-3">
+
+<div class="col-lg-3">
+
+<select name="site_id"
+        class="form-control">
+
+<option value="">
+All Sites
+</option>
+
+{% for site in sites %}
+
+<option value="{{ site.id }}"
+{% if request.args.get('site_id') == site.id|string %}
+selected
+{% endif %}
+>
+
+{{ site.name }}
+
+</option>
+
+{% endfor %}
+
+</select>
+
+</div>
+
+
+<div class="col-lg-2">
+
+<select name="filter"
+        class="form-control">
+
+<option value="">
+Select Filter
+</option>
+
+<option value="daily">
+Daily
+</option>
+
+<option value="weekly">
+Weekly
+</option>
+
+<option value="monthly">
+Monthly
+</option>
+
+<option value="yearly">
+Yearly
+</option>
+
+</select>
+
+</div>
+
+
+<div class="col-lg-2">
+
+<input type="date"
+       name="start_date"
+       class="form-control">
+
+</div>
+
+
+<div class="col-lg-2">
+
+<input type="date"
+       name="end_date"
+       class="form-control">
+
+</div>
+
+
+<div class="col-lg-3">
+
+<button class="btn btn-primary w-100">
+
+Generate
+
+</button>
+
+</div>
+
+</div>
+
+</form>
+
+</div>
+
+
+
+<div class="card p-4">
+
+<img src="data:image/png;base64,{{ chart }}"
+     class="img-fluid rounded">
+
+</div>
+
+{% endblock %}

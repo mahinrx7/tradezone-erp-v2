@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+<h1>
+
+Expenses
+
+</h1>
+
+<a href="/add_expense"
+   class="btn btn-primary">
+
+Add Expense
+
+</a>
+
+</div>
+
+
+
+<div class="card p-4 mb-4">
+
+<form method="GET">
+
+<div class="row g-3 align-items-end">
+
+
+<div class="col-lg-4">
+
+<label class="mb-2">
+
+Site
+
+</label>
+
+<select name="site_id"
+        class="form-control">
+
+<option value="">
+
+All Sites
+
+</option>
+
+{% for site in sites %}
+
+<option value="{{ site.id }}">
+
+{{ site.name }}
+
+</option>
+
+{% endfor %}
+
+</select>
+
+</div>
+
+
+
+<div class="col-lg-3">
+
+<label class="mb-2">
+
+From
+
+</label>
+
+<input type="date"
+       name="start_date"
+       class="form-control">
+
+</div>
+
+
+
+<div class="col-lg-3">
+
+<label class="mb-2">
+
+To
+
+</label>
+
+<input type="date"
+       name="end_date"
+       class="form-control">
+
+</div>
+
+
+
+<div class="col-lg-2">
+
+<button class="btn btn-primary w-100">
+
+Apply
+
+</button>
+
+</div>
+
+</div>
+
+</form>
+
+</div>
+
+
+
+<div class="card p-4 mb-4">
+
+<h2>
+
+Net Expenses:
+BD {{ total }}
+
+</h2>
+
+<p class="text-secondary">
+
+Including Labour Cost:
+BD {{ labour_total }}
+
+</p>
+
+</div>
+
+
+
+<div class="card p-4">
+
+<div class="table-responsive">
+
+<table class="table table-dark table-hover align-middle">
+
+<thead>
+
+<tr>
+
+<th>ID</th>
+<th>Site</th>
+<th>Category</th>
+<th>Description</th>
+<th>Amount</th>
+<th>Date</th>
+<th>Receipt</th>
+<th>Edit</th>
+<th>Delete</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for item in expenses %}
+
+<tr>
+
+<td>
+
+{{ item.id }}
+
+</td>
+
+
+<td>
+
+{% if item.site %}
+
+{{ item.site.name }}
+
+{% endif %}
+
+</td>
+
+
+<td>
+
+{{ item.category }}
+
+</td>
+
+
+<td>
+
+{{ item.description }}
+
+</td>
+
+
+<td>
+
+BD {{ item.amount }}
+
+</td>
+
+
+<td>
+
+{{ item.date }}
+
+</td>
+
+
+<td>
+
+{% if item.receipt_image %}
+
+<a href="/static/uploads/{{ item.receipt_image }}"
+   target="_blank"
+   class="btn btn-info btn-sm">
+
+View
+
+</a>
+
+{% else %}
+
+-
+
+{% endif %}
+
+</td>
+
+
+<td>
+
+<a href="/edit_expense/{{ item.id }}"
+   class="btn btn-warning btn-sm">
+
+Edit
+
+</a>
+
+</td>
+
+
+<td>
+
+<a href="/delete_expense/{{ item.id }}"
+   class="btn btn-danger btn-sm">
+
+Delete
+
+</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+
+
+<div class="mt-4 d-flex gap-3">
+
+<a href="/export_expenses_excel"
+   class="btn btn-success">
+
+Export Excel
+
+</a>
+
+
+<a href="/export_expenses_pdf"
+   class="btn btn-danger">
+
+Export PDF
+
+</a>
+
+</div>
+
+{% endblock %}

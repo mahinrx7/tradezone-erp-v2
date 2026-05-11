@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+<h1>
+
+Labour
+
+</h1>
+
+<a href="/add_labour"
+   class="btn btn-primary">
+
+Add Labour
+
+</a>
+
+</div>
+
+<div class="card p-4">
+
+<div class="table-responsive">
+
+<table class="table table-dark table-hover">
+
+<thead>
+
+<tr>
+
+<th>ID</th>
+<th>Name</th>
+<th>Specialization</th>
+<th>Rate</th>
+<th>Edit</th>
+<th>Delete</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for worker in labour %}
+
+<tr>
+
+<td>{{ worker.id }}</td>
+
+<td>{{ worker.name }}</td>
+
+<td>{{ worker.specialization }}</td>
+
+<td>BD {{ worker.hourly_rate }}</td>
+
+<td>
+
+<a href="/edit_labour/{{ worker.id }}"
+   class="btn btn-sm btn-warning">
+
+Edit
+
+</a>
+
+</td>
+
+<td>
+
+<a href="/delete_labour/{{ worker.id }}"
+   class="btn btn-sm btn-danger">
+
+Delete
+
+</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+{% endblock %}

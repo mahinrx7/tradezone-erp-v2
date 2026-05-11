@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1 class="mb-5">
+
+Dashboard
+
+</h1>
+
+
+<div class="row g-4 mb-5">
+
+<div class="col-lg-4">
+
+<div class="dashboard-mini-card">
+
+<div class="dashboard-mini-title">
+
+Total Sites
+
+</div>
+
+<div class="dashboard-mini-value">
+
+{{ total_sites }}
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="col-lg-4">
+
+<div class="dashboard-mini-card">
+
+<div class="dashboard-mini-title">
+
+Company Expenses
+
+</div>
+
+<div class="dashboard-mini-value">
+
+BD {{ total_expenses }}
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="col-lg-4">
+
+<div class="dashboard-mini-card">
+
+<div class="dashboard-mini-title">
+
+Client Payments
+
+</div>
+
+<div class="dashboard-mini-value">
+
+BD {{ total_payments }}
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<div class="row g-4">
+
+{% for item in dashboard_sites %}
+
+<div class="col-lg-6">
+
+<div class="card site-card">
+
+<h2>
+
+{{ item.site.name }}
+
+</h2>
+
+
+<p>
+
+<strong>Client:</strong>
+
+{{ item.site.client_name }}
+
+</p>
+
+
+<p>
+
+<strong>Contract:</strong>
+
+BD {{ item.site.contract_amount }}
+
+</p>
+
+
+<p>
+
+<strong>Received:</strong>
+
+BD {{ item.payments }}
+
+</p>
+
+
+<p>
+
+<strong>Remaining:</strong>
+
+BD {{ item.remaining }}
+
+</p>
+
+
+<p>
+
+<strong>Expense:</strong>
+
+BD {{ item.expenses }}
+
+</p>
+
+
+<p>
+
+<strong>Labour Cost:</strong>
+
+BD {{ item.labour }}
+
+</p>
+
+
+<h3 class="mt-4">
+
+Profit:
+
+<span class="{% if item.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+
+BD {{ item.profit }}
+
+</span>
+
+</h3>
+
+
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+{% endblock %}

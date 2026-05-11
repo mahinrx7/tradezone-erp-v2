@@ -1,56 +1,36 @@
-import os
-
-from flask import current_app
-
-from werkzeug.utils import secure_filename
+from flask import Blueprint
+from flask import render_template
+from flask import request
+from flask import redirect
+from flask import url_for
+from flask import flash
+from flask import send_file
 
 from flask_login import login_required
 
-from flask import (
-    Blueprint,
-    render_template,
-    request,
-    redirect,
-    send_file
-)
-
-from app.models import (
-    Expense,
-    Site,
-    WorkEntry
-)
-
 from app import db
 
-import pandas as pd
-
-from reportlab.platypus import (
-    SimpleDocTemplate,
-    Table,
-    TableStyle,
-    Spacer,
-    Paragraph
-)
-
-from reportlab.lib import colors
-
-from reportlab.lib.styles import getSampleStyleSheet
-
-from reportlab.lib.pagesizes import A4
-
-from openpyxl.styles import (
-    Font,
-    PatternFill,
-    Border,
-    Side,
-    Alignment
-)
-
-from openpyxl.utils import get_column_letter
+from app.models import Expense
+from app.models import Site
+from app.models import Labour
 
 from datetime import datetime
 
+import pandas as pd
+
 import os
+
+from io import BytesIO
+
+from reportlab.platypus import SimpleDocTemplate
+from reportlab.platypus import Table
+from reportlab.platypus import TableStyle
+from reportlab.platypus import Paragraph
+from reportlab.platypus import Spacer
+
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import letter
 
 
 expenses = Blueprint(
@@ -59,8 +39,8 @@ expenses = Blueprint(
 )
 
 
-# VIEW EXPENSES
 @expenses.route("/expenses")
+@login_required
 def view_expenses():
 
     site_id = request.args.get("site_id")
@@ -69,77 +49,104 @@ def view_expenses():
 
     end_date = request.args.get("end_date")
 
-    sites = Site.query.all()
+    expense_query = Expense.query
 
-    query = Expense.query
+    labour_query = Labour.query
 
+    if site_id and site_id != "all":
 
-    # SITE FILTER
-    if site_id:
-
-        query = query.filter(
-            Expense.site_id == site_id
+        expense_query = expense_query.filter_by(
+            site_id=site_id
         )
 
+        labour_query = labour_query.filter_by(
+            site_id=site_id
+        )
 
-    # DATE FILTER
     if start_date and end_date:
 
-        query = query.filter(
+        expense_query = expense_query.filter(
             Expense.date >= start_date,
             Expense.date <= end_date
         )
 
-
-    expense_list = query.all()
-
-
-    # EXPENSE TOTAL
-    total_expense = 0
-
-    for expense in expense_list:
-
-        total_expense += expense.amount
-
-
-    # LABOUR COST
-    labour_entries = WorkEntry.query.all()
-
-    labour_total = 0
-
-    for entry in labour_entries:
-
-        if site_id:
-
-            if str(entry.site_id) != str(site_id):
-
-                continue
-
-        labour_total += (
-            entry.hours *
-            entry.labour.hourly_rate
+        labour_query = labour_query.filter(
+            Labour.date >= start_date,
+            Labour.date <= end_date
         )
 
+    expenses_data = expense_query.all()
 
-    net_total = total_expense + labour_total
+    labour_data = labour_query.all()
 
+    combined_expenses = []
+
+    for expense in expenses_data:
+
+        combined_expenses.append({
+
+            "id": expense.id,
+
+            "site": expense.site.name
+            if expense.site else "",
+
+            "category": expense.category,
+
+            "description": expense.description,
+
+            "amount": expense.amount,
+
+            "date": expense.date
+        })
+
+    for worker in labour_data:
+
+        combined_expenses.append({
+
+            "id": worker.id,
+
+            "site": worker.site.name
+            if worker.site else "",
+
+            "category": "Labour",
+
+            "description": worker.worker_name,
+
+            "amount": worker.total_amount,
+
+            "date": worker.date
+        })
+
+    total_expense = sum(
+        item["amount"]
+        for item in combined_expenses
+    )
+
+    labour_total = sum(
+        worker.total_amount
+        for worker in labour_data
+    )
+
+    sites = Site.query.all()
 
     return render_template(
 
         "expenses.html",
 
-        expenses=expense_list,
+        expenses=combined_expenses,
 
-        sites=sites,
+        total_expense=total_expense,
 
-        total=round(net_total,2),
+        labour_total=labour_total,
 
-        labour_total=round(labour_total,2)
+        sites=sites
     )
 
 
-# ADD EXPENSE
-@expenses.route("/add_expense", methods=["GET", "POST"])
+@expenses.route(
+    "/add_expense",
+    methods=["GET", "POST"]
+)
 @login_required
 def add_expense():
 
@@ -147,29 +154,39 @@ def add_expense():
 
     if request.method == "POST":
 
-        receipt = request.files.get(
+        receipt_file = request.files.get(
             "receipt"
         )
 
         filename = None
 
-        if receipt and receipt.filename != "":
+        if receipt_file and receipt_file.filename:
 
-            filename = secure_filename(
-                receipt.filename
+            upload_folder = os.path.join(
+                "app",
+                "static",
+                "receipts"
             )
 
-            save_path = os.path.join(
+            os.makedirs(
+                upload_folder,
+                exist_ok=True
+            )
 
-                current_app.config[
-                    "UPLOAD_FOLDER"
-                ],
+            filename = (
+                str(datetime.now().timestamp())
+                + "_"
+                + receipt_file.filename
+            )
 
+            receipt_path = os.path.join(
+                upload_folder,
                 filename
             )
 
-            receipt.save(save_path)
-
+            receipt_file.save(
+                receipt_path
+            )
 
         expense = Expense(
 
@@ -179,21 +196,26 @@ def add_expense():
 
             description=request.form["description"],
 
-            amount=float(
-                request.form["amount"]
-            ),
+            amount=request.form["amount"],
 
             date=request.form["date"],
 
-            receipt_image=filename
+            receipt=filename
         )
 
         db.session.add(expense)
 
         db.session.commit()
 
-        return redirect("/expenses")
+        flash(
+            "Expense added successfully"
+        )
 
+        return redirect(
+            url_for(
+                "expenses.view_expenses"
+            )
+        )
 
     return render_template(
 
@@ -202,274 +224,201 @@ def add_expense():
         sites=sites
     )
 
-# DELETE EXPENSE
-@expenses.route("/delete_expense/<int:id>")
-def delete_expense(id):
 
-    expense = Expense.query.get(id)
+@expenses.route(
+    "/delete_expense/<int:expense_id>"
+)
+@login_required
+def delete_expense(expense_id):
+
+    expense = Expense.query.get_or_404(
+        expense_id
+    )
 
     db.session.delete(expense)
 
     db.session.commit()
 
-    return redirect("/expenses")
+    flash(
+        "Expense deleted successfully"
+    )
+
+    return redirect(
+        url_for(
+            "expenses.view_expenses"
+        )
+    )
 
 
-# EXPORT EXCEL
-@expenses.route("/export_expenses_excel")
+@expenses.route(
+    "/export_expenses_excel"
+)
+@login_required
 def export_expenses_excel():
 
-    expenses_list = Expense.query.all()
+    expenses_data = Expense.query.all()
 
     data = []
 
-    for expense in expenses_list:
+    for expense in expenses_data:
 
         data.append({
 
-            "Site": expense.site.name,
+            "Site":
+            expense.site.name
+            if expense.site else "",
 
-            "Category": expense.category,
+            "Category":
+            expense.category,
 
-            "Description": expense.description,
+            "Description":
+            expense.description,
 
-            "Amount (BD)": expense.amount,
+            "Amount (BD)":
+            expense.amount,
 
-            "Date": expense.date
+            "Date":
+            expense.date
         })
-
 
     df = pd.DataFrame(data)
 
-
-    # ABSOLUTE EXPORT PATH
-    BASE_DIR = os.path.abspath(
-        os.path.dirname(__file__)
-    )
-
-    export_folder = os.path.join(
-        BASE_DIR,
-        "..",
-        "exports"
-    )
-
-    export_folder = os.path.abspath(
-        export_folder
-    )
-
-
-    if not os.path.exists(export_folder):
-
-        os.makedirs(export_folder)
-
-
-    filename = f"expenses_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
-
-    file_path = os.path.join(
-        export_folder,
-        filename
-    )
-
+    output = BytesIO()
 
     with pd.ExcelWriter(
-        file_path,
+        output,
         engine="openpyxl"
     ) as writer:
 
         df.to_excel(
+
             writer,
-            sheet_name="Expenses",
-            index=False
+
+            index=False,
+
+            sheet_name="Expenses"
         )
 
-        workbook = writer.book
+        worksheet = writer.sheets[
+            "Expenses"
+        ]
 
-        worksheet = writer.sheets["Expenses"]
-
-
-        # HEADER STYLE
-        header_fill = PatternFill(
-
-            start_color="1F2937",
-
-            end_color="1F2937",
-
-            fill_type="solid"
-        )
-
-        header_font = Font(
-
-            bold=True,
-
-            color="FFFFFF",
-
-            size=12
-        )
-
-        thin = Side(
-
-            border_style="thin",
-
-            color="D1D5DB"
-        )
-
-        border = Border(
-
-            left=thin,
-
-            right=thin,
-
-            top=thin,
-
-            bottom=thin
-        )
-
-
-        # HEADER
         for cell in worksheet[1]:
 
-            cell.fill = header_fill
-
-            cell.font = header_font
-
-            cell.border = border
-
-            cell.alignment = Alignment(
-
-                horizontal="center",
-
-                vertical="center"
+            cell.font = cell.font.copy(
+                bold=True
             )
 
-
-        # BODY
-        for row in worksheet.iter_rows(min_row=2):
-
-            for cell in row:
-
-                cell.border = border
-
-                cell.alignment = Alignment(
-
-                    vertical="center"
+            cell.fill = (
+                cell.fill.copy(
+                    fill_type="solid",
+                    start_color="1F2937"
                 )
+            )
 
+        for column in worksheet.columns:
 
-        # COLUMN WIDTHS
-        column_widths = {
+            max_length = 0
 
-            1:20,
-            2:20,
-            3:35,
-            4:18,
-            5:18
-        }
+            column_letter = (
+                column[0].column_letter
+            )
 
-        for col_num, width in column_widths.items():
+            for cell in column:
 
-            col_letter = get_column_letter(
-                col_num
+                try:
+
+                    if len(
+                        str(cell.value)
+                    ) > max_length:
+
+                        max_length = len(
+                            str(cell.value)
+                        )
+
+                except:
+                    pass
+
+            adjusted_width = (
+                max_length + 5
             )
 
             worksheet.column_dimensions[
-                col_letter
-            ].width = width
+                column_letter
+            ].width = adjusted_width
 
-
-        # ROW HEIGHTS
-        for row in worksheet.iter_rows():
-
-            worksheet.row_dimensions[
-                row[0].row
-            ].height = 24
-
+    output.seek(0)
 
     return send_file(
 
-        file_path,
+        output,
 
-        as_attachment=True
+        as_attachment=True,
+
+        download_name="expenses_report.xlsx",
+
+        mimetype=(
+            "application/"
+            "vnd.openxmlformats-"
+            "officedocument."
+            "spreadsheetml.sheet"
+        )
     )
 
 
-# EXPORT PDF
-@expenses.route("/export_expenses_pdf")
+@expenses.route(
+    "/export_expenses_pdf"
+)
+@login_required
 def export_expenses_pdf():
 
-    expenses_list = Expense.query.all()
+    expenses_data = Expense.query.all()
 
-
-    # ABSOLUTE EXPORT PATH
-    BASE_DIR = os.path.abspath(
-        os.path.dirname(__file__)
-    )
-
-    export_folder = os.path.join(
-        BASE_DIR,
-        "..",
-        "exports"
-    )
-
-    export_folder = os.path.abspath(
-        export_folder
-    )
-
-
-    if not os.path.exists(export_folder):
-
-        os.makedirs(export_folder)
-
-
-    filename = f"expenses_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-
-    pdf_path = os.path.join(
-        export_folder,
-        filename
-    )
-
+    output = BytesIO()
 
     doc = SimpleDocTemplate(
 
-        pdf_path,
+        output,
 
-        pagesize=A4
+        pagesize=letter
     )
 
     styles = getSampleStyleSheet()
 
     elements = []
 
-
     title = Paragraph(
 
-        "Tradezone ERP - Expense Report",
+        "Tradezone ERP Expense Report",
 
-        styles["Heading1"]
+        styles["Title"]
     )
 
     elements.append(title)
 
     elements.append(
-        Spacer(1,20)
+        Spacer(1, 20)
     )
 
-
-    data = [[
+    table_data = [[
 
         "Site",
-        "Category",
-        "Description",
-        "Amount",
-        "Date"
 
+        "Category",
+
+        "Description",
+
+        "Amount",
+
+        "Date"
     ]]
 
+    for expense in expenses_data:
 
-    for expense in expenses_list:
+        table_data.append([
 
-        data.append([
-
-            expense.site.name,
+            expense.site.name
+            if expense.site else "",
 
             expense.category,
 
@@ -477,95 +426,68 @@ def export_expenses_pdf():
 
             f"BD {expense.amount}",
 
-            expense.date
+            str(expense.date)
         ])
 
+    table = Table(
+        table_data
+    )
 
-    table = Table(data)
+    table.setStyle(
 
+        TableStyle([
 
-    table.setStyle(TableStyle([
+            (
+                "BACKGROUND",
+                (0, 0),
+                (-1, 0),
+                colors.black
+            ),
 
-        # HEADER
-        ("BACKGROUND",(0,0),(-1,0),colors.HexColor("#1F2937")),
+            (
+                "TEXTCOLOR",
+                (0, 0),
+                (-1, 0),
+                colors.white
+            ),
 
-        ("TEXTCOLOR",(0,0),(-1,0),colors.white),
+            (
+                "FONTNAME",
+                (0, 0),
+                (-1, 0),
+                "Helvetica-Bold"
+            ),
 
-        ("FONTNAME",(0,0),(-1,0),"Helvetica-Bold"),
+            (
+                "GRID",
+                (0, 0),
+                (-1, -1),
+                1,
+                colors.grey
+            ),
 
-        ("FONTSIZE",(0,0),(-1,0),12),
-
-        ("BOTTOMPADDING",(0,0),(-1,0),12),
-
-        # BODY
-        ("BACKGROUND",(0,1),(-1,-1),colors.whitesmoke),
-
-        ("TEXTCOLOR",(0,1),(-1,-1),colors.black),
-
-        ("FONTNAME",(0,1),(-1,-1),"Helvetica"),
-
-        ("FONTSIZE",(0,1),(-1,-1),10),
-
-        # GRID
-        ("GRID",(0,0),(-1,-1),1,colors.grey),
-
-        # ALIGN
-        ("ALIGN",(0,0),(-1,-1),"CENTER"),
-
-        # PADDING
-        ("TOPPADDING",(0,0),(-1,-1),8),
-
-        ("BOTTOMPADDING",(0,0),(-1,-1),8)
-
-    ]))
-
+            (
+                "BOTTOMPADDING",
+                (0, 0),
+                (-1, 0),
+                12
+            )
+        ])
+    )
 
     elements.append(table)
 
     doc.build(elements)
 
+    output.seek(0)
 
     return send_file(
 
-        pdf_path,
+        output,
 
-        as_attachment=True
-    )
+        as_attachment=True,
 
-@expenses.route("/edit_expense/<int:expense_id>", methods=["GET", "POST"])
-@login_required
-def edit_expense(expense_id):
+        download_name="expenses_report.pdf",
 
-    expense = Expense.query.get_or_404(expense_id)
-
-    sites = Site.query.all()
-
-    if request.method == "POST":
-
-        expense.site_id = request.form["site_id"]
-
-        expense.category = request.form["category"]
-
-        expense.description = request.form["description"]
-
-        expense.amount = request.form["amount"]
-
-        expense.date = datetime.strptime(
-            request.form["date"],
-            "%Y-%m-%d"
-        )
-
-        db.session.commit()
-
-        flash("Expense updated successfully")
-
-        return redirect(url_for("expenses.view_expenses"))
-
-    return render_template(
-
-        "edit_expense.html",
-
-        expense=expense,
-
-        sites=sites
+        mimetype="application/pdf"
     )

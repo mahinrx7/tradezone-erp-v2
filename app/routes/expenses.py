@@ -531,3 +531,41 @@ def export_expenses_pdf():
 
         as_attachment=True
     )
+
+@expenses.route("/edit_expense/<int:expense_id>", methods=["GET", "POST"])
+@login_required
+def edit_expense(expense_id):
+
+    expense = Expense.query.get_or_404(expense_id)
+
+    sites = Site.query.all()
+
+    if request.method == "POST":
+
+        expense.site_id = request.form["site_id"]
+
+        expense.category = request.form["category"]
+
+        expense.description = request.form["description"]
+
+        expense.amount = request.form["amount"]
+
+        expense.date = datetime.strptime(
+            request.form["date"],
+            "%Y-%m-%d"
+        )
+
+        db.session.commit()
+
+        flash("Expense updated successfully")
+
+        return redirect(url_for("expenses.view_expenses"))
+
+    return render_template(
+
+        "edit_expense.html",
+
+        expense=expense,
+
+        sites=sites
+    )

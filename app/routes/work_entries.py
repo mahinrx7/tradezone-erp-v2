@@ -5,6 +5,8 @@ from flask import (
     redirect
 )
 
+from flask_login import login_required
+
 from app import db
 
 from app.models import (
@@ -21,9 +23,12 @@ work_entries = Blueprint(
 
 # VIEW WORK ENTRIES
 @work_entries.route("/work_entries")
+@login_required
 def view_work_entries():
 
-    entries = WorkEntry.query.all()
+    entries = WorkEntry.query.order_by(
+        WorkEntry.id.desc()
+    ).all()
 
     labour = Labour.query.all()
 
@@ -42,6 +47,7 @@ def view_work_entries():
     "/add_work_entry",
     methods=["POST"]
 )
+@login_required
 def add_work_entry():
 
     entry = WorkEntry(
@@ -66,6 +72,7 @@ def add_work_entry():
 @work_entries.route(
     "/delete_work_entry/<int:id>"
 )
+@login_required
 def delete_work_entry(id):
 
     entry = WorkEntry.query.get_or_404(id)

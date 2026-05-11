@@ -5,6 +5,8 @@ from flask import (
     redirect
 )
 
+from flask_login import login_required
+
 from app import db
 
 from app.models import (
@@ -20,9 +22,12 @@ payments = Blueprint(
 
 # VIEW PAYMENTS
 @payments.route("/payments")
+@login_required
 def view_payments():
 
-    payments_list = ClientPayment.query.all()
+    payments_list = ClientPayment.query.order_by(
+        ClientPayment.id.desc()
+    ).all()
 
     sites = Site.query.all()
 
@@ -38,6 +43,7 @@ def view_payments():
     "/add_payment",
     methods=["POST"]
 )
+@login_required
 def add_payment():
 
     payment = ClientPayment(
@@ -62,6 +68,7 @@ def add_payment():
 @payments.route(
     "/delete_payment/<int:id>"
 )
+@login_required
 def delete_payment(id):
 
     payment = ClientPayment.query.get_or_404(id)

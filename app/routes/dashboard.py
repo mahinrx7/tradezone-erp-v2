@@ -3,6 +3,8 @@ from flask import (
     render_template
 )
 
+from flask_login import login_required
+
 from sqlalchemy import func
 
 from app.models import (
@@ -21,6 +23,7 @@ dashboard = Blueprint(
 
 
 @dashboard.route("/")
+@login_required
 def home():
 
     sites = Site.query.all()
@@ -64,10 +67,11 @@ def home():
 
         for entry in work_entries:
 
-            labour_total += (
-                entry.hours *
-                entry.labour.hourly_rate
-            )
+            if entry.labour:
+                labour_total += (
+                    float(entry.hours or 0) *
+                    float(entry.labour.hourly_rate or 0)
+                )
 
 
         # TOTAL COST

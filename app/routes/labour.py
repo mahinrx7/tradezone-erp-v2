@@ -5,6 +5,8 @@ from flask import (
     redirect
 )
 
+from flask_login import login_required
+
 from app import db
 
 from app.models import Labour
@@ -17,6 +19,7 @@ labour = Blueprint(
 
 # VIEW LABOUR
 @labour.route("/labour")
+@login_required
 def view_labour():
 
     all_labour = Labour.query.all()
@@ -32,6 +35,7 @@ def view_labour():
     "/add_labour",
     methods=["GET", "POST"]
 )
+@login_required
 def add_labour():
 
     if request.method == "POST":
@@ -58,6 +62,7 @@ def add_labour():
 
 # DELETE LABOUR
 @labour.route("/delete_labour/<int:id>")
+@login_required
 def delete_labour(id):
 
     worker = Labour.query.get_or_404(id)
@@ -74,6 +79,7 @@ def delete_labour(id):
     "/edit_labour/<int:id>",
     methods=["GET", "POST"]
 )
+@login_required
 def edit_labour(id):
 
     worker = Labour.query.get_or_404(id)

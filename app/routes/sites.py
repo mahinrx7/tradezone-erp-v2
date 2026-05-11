@@ -5,6 +5,8 @@ from flask import (
     redirect
 )
 
+from flask_login import login_required
+
 from app import db
 
 from app.models import Site
@@ -17,6 +19,7 @@ sites = Blueprint(
 
 # VIEW SITES
 @sites.route("/sites")
+@login_required
 def view_sites():
 
     all_sites = Site.query.all()
@@ -32,6 +35,7 @@ def view_sites():
     "/add_site",
     methods=["GET", "POST"]
 )
+@login_required
 def add_site():
 
     if request.method == "POST":
@@ -64,6 +68,7 @@ def add_site():
 
 # DELETE SITE
 @sites.route("/delete_site/<int:id>")
+@login_required
 def delete_site(id):
 
     site = Site.query.get_or_404(id)
@@ -80,6 +85,7 @@ def delete_site(id):
     "/edit_site/<int:id>",
     methods=["GET", "POST"]
 )
+@login_required
 def edit_site(id):
 
     site = Site.query.get_or_404(id)

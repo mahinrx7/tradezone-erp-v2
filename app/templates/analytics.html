@@ -2,103 +2,71 @@
 
 {% block content %}
 
-<h1 class="mb-4">
-Analytics
-</h1>
+<div class="page-header">
+    <h1 class="page-title">Analytics</h1>
+</div>
 
 
-<div class="card p-4 mb-4">
+<div class="card mb-4">
 
-<form method="GET"
-      action="/analytics">
+    <div class="card-body">
 
-<div class="row g-3 align-items-end">
+    <form method="GET" action="/analytics">
 
+        <div class="row g-3 align-items-end">
 
-<div class="col-lg-3">
+            <div class="col-lg-3 col-md-6">
+                <label class="mb-2">Site</label>
+                <select name="site_id" class="form-control">
+                    <option value="">All Sites</option>
+                    {% for site in sites %}
+                    <option value="{{ site.id }}"
+                        {% if request.args.get('site_id') == site.id|string %}selected{% endif %}>
+                        {{ site.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
 
-<select name="site_id"
-        class="form-control">
+            <div class="col-lg-3 col-md-6">
+                <label class="mb-2">From Date</label>
+                <input type="date" name="start_date" class="form-control"
+                       value="{{ request.args.get('start_date', '') }}">
+            </div>
 
-<option value="">
-All Sites
-</option>
+            <div class="col-lg-3 col-md-6">
+                <label class="mb-2">To Date</label>
+                <input type="date" name="end_date" class="form-control"
+                       value="{{ request.args.get('end_date', '') }}">
+            </div>
 
-{% for site in sites %}
+            <div class="col-lg-3 col-md-6">
+                <button class="btn btn-primary w-100" style="height:48px;">
+                    Generate Report
+                </button>
+            </div>
 
-<option value="{{ site.id }}"
-{% if request.args.get('site_id') == site.id|string %}
-selected
-{% endif %}
->
+        </div>
 
-{{ site.name }}
+    </form>
 
-</option>
-
-{% endfor %}
-
-</select>
+    </div>
 
 </div>
 
 
-
-<div class="col-lg-3">
-
-<label class="mb-2">
-
-From Date
-
-</label>
-
-<input type="date"
-       name="start_date"
-       class="form-control">
-
-</div>
-
-
-
-<div class="col-lg-3">
-
-<label class="mb-2">
-
-To Date
-
-</label>
-
-<input type="date"
-       name="end_date"
-       class="form-control">
-
-</div>
-
-
-
-<div class="col-lg-3">
-
-<button class="btn btn-primary w-100">
-
-Generate Report
-
-</button>
-
-</div>
-
-</div>
-
-</form>
-
-</div>
-
-
-
-<div class="card p-4 analytics-chart-card">
-
-<img src="data:image/png;base64,{{ chart }}"
-     class="analytics-chart">
-
+<div class="card">
+    <div class="card-body">
+        {% if chart %}
+        <img src="data:image/png;base64,{{ chart }}"
+             class="analytics-chart"
+             alt="Expense Distribution Chart">
+        {% else %}
+        <p style="color:var(--text-tertiary);text-align:center;padding:40px 0;">
+            No data available for the selected filters.
+        </p>
+        {% endif %}
+    </div>
 </div>
 
 {% endblock %}

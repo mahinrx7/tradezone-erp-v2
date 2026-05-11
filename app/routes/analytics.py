@@ -4,6 +4,8 @@ from flask import (
     request
 )
 
+from flask_login import login_required
+
 from app.models import (
     Expense,
     Site,
@@ -29,6 +31,7 @@ analytics = Blueprint(
 
 
 @analytics.route("/analytics")
+@login_required
 def analytics_page():
 
     site_id = request.args.get("site_id")
@@ -63,7 +66,7 @@ def analytics_page():
 
 
     categories = {}
-    
+
 
     # NORMAL EXPENSES
     for expense in expenses:
@@ -72,7 +75,7 @@ def analytics_page():
 
             categories[expense.category] = 0
 
-        categories[expense.category] += expense.amount
+        categories[expense.category] += float(expense.amount or 0)
 
 
     # LABOUR COST
@@ -82,6 +85,9 @@ def analytics_page():
 
     for entry in labour_entries:
 
+        if entry.labour is None:
+            continue
+
         if site_id:
 
             if str(entry.site_id) != str(site_id):
@@ -90,8 +96,8 @@ def analytics_page():
 
         labour_total += (
 
-            entry.hours *
-            entry.labour.hourly_rate
+            float(entry.hours or 0) *
+            float(entry.labour.hourly_rate or 0)
         )
 
 
@@ -100,39 +106,52 @@ def analytics_page():
         categories["Labour"] = labour_total
 
 
-    labels = list(categories.keys())
+    # Handle empty data
+    chart = ""
 
-    values = list(categories.values())
+    if categories:
 
+        labels = list(categories.keys())
 
-    # CREATE CHART
-    plt.figure(figsize=(7,5))
+        values = list(categories.values())
 
-    plt.pie(
-        values,
-        labels=labels,
-        autopct="%1.1f%%"
-    )
+        # CREATE CHART
+        fig, ax = plt.subplots(figsize=(7, 5))
 
-    plt.title(
-        "Expense Distribution"
-    )
+        wedges, texts, autotexts = ax.pie(
+            values,
+            labels=labels,
+            autopct="%1.1f%%",
+            textprops={"fontsize": 11}
+        )
 
-    img = io.BytesIO()
+        ax.set_title(
+            "Expense Distribution",
+            fontsize=14,
+            fontweight="bold",
+            pad=20
+        )
 
-    plt.savefig(
-        img,
-        format="png",
-        bbox_inches="tight"
-    )
+        fig.tight_layout()
 
-    img.seek(0)
+        img = io.BytesIO()
 
-    chart = base64.b64encode(
-        img.getvalue()
-    ).decode()
+        fig.savefig(
+            img,
+            format="png",
+            dpi=150,
+            bbox_inches="tight",
+            facecolor="white"
+        )
 
-    plt.close()
+        img.seek(0)
+
+        chart = base64.b64encode(
+            img.getvalue()
+        ).decode()
+
+        plt.close(fig)
+
 
     return render_template(
 

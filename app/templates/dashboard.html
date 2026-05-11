@@ -2,79 +2,28 @@
 
 {% block content %}
 
-<h1 class="mb-5">
-
-Dashboard
-
-</h1>
-
-
-<div class="row g-4 mb-5">
-
-<div class="col-lg-4">
-
-<div class="dashboard-mini-card">
-
-<div class="dashboard-mini-title">
-
-Total Sites
-
+<div class="page-header">
+    <h1 class="page-title">Dashboard</h1>
 </div>
 
-<div class="dashboard-mini-value">
+<div class="stats-grid mb-4">
 
-{{ total_sites }}
+    <div class="dashboard-mini-card">
+        <div class="dashboard-mini-title">Total Sites</div>
+        <div class="dashboard-mini-value">{{ total_sites }}</div>
+    </div>
 
-</div>
+    <div class="dashboard-mini-card">
+        <div class="dashboard-mini-title">Company Expenses</div>
+        <div class="dashboard-mini-value">BD {{ total_expenses }}</div>
+    </div>
 
-</div>
-
-</div>
-
-
-<div class="col-lg-4">
-
-<div class="dashboard-mini-card">
-
-<div class="dashboard-mini-title">
-
-Company Expenses
+    <div class="dashboard-mini-card">
+        <div class="dashboard-mini-title">Client Payments</div>
+        <div class="dashboard-mini-value">BD {{ total_payments }}</div>
+    </div>
 
 </div>
-
-<div class="dashboard-mini-value">
-
-BD {{ total_expenses }}
-
-</div>
-
-</div>
-
-</div>
-
-
-<div class="col-lg-4">
-
-<div class="dashboard-mini-card">
-
-<div class="dashboard-mini-title">
-
-Client Payments
-
-</div>
-
-<div class="dashboard-mini-value">
-
-BD {{ total_payments }}
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
 
 
 <div class="row g-4">
@@ -83,83 +32,30 @@ BD {{ total_payments }}
 
 <div class="col-lg-6">
 
-<div class="card site-card">
+    <div class="card site-card">
 
-<h2>
+        <h2>{{ item.site.name }}</h2>
 
-{{ item.site.name }}
+        <p><strong>Client:</strong> {{ item.site.client_name }}</p>
 
-</h2>
+        <p><strong>Contract:</strong> BD {{ "%.2f"|format(item.site.contract_amount) }}</p>
 
+        <p><strong>Received:</strong> BD {{ "%.2f"|format(item.payments) }}</p>
 
-<p>
+        <p><strong>Remaining:</strong> BD {{ "%.2f"|format(item.remaining) }}</p>
 
-<strong>Client:</strong>
+        <p><strong>Expense:</strong> BD {{ "%.2f"|format(item.expenses) }}</p>
 
-{{ item.site.client_name }}
+        <p><strong>Labour Cost:</strong> BD {{ "%.2f"|format(item.labour) }}</p>
 
-</p>
+        <h3 class="mt-4" style="font-size:18px;font-weight:700;">
+            Profit:
+            <span class="{% if item.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                BD {{ "%.2f"|format(item.profit) }}
+            </span>
+        </h3>
 
-
-<p>
-
-<strong>Contract:</strong>
-
-BD {{ item.site.contract_amount }}
-
-</p>
-
-
-<p>
-
-<strong>Received:</strong>
-
-BD {{ item.payments }}
-
-</p>
-
-
-<p>
-
-<strong>Remaining:</strong>
-
-BD {{ item.remaining }}
-
-</p>
-
-
-<p>
-
-<strong>Expense:</strong>
-
-BD {{ item.expenses }}
-
-</p>
-
-
-<p>
-
-<strong>Labour Cost:</strong>
-
-BD {{ item.labour }}
-
-</p>
-
-
-<h3 class="mt-4">
-
-Profit:
-
-<span class="{% if item.profit >= 0 %}text-success{% else %}text-danger{% endif %}">
-
-BD {{ item.profit }}
-
-</span>
-
-</h3>
-
-
-</div>
+    </div>
 
 </div>
 

@@ -104,6 +104,8 @@ def create_app():
 
     from app.routes.admin import admin
 
+    from app.routes.backup import backup
+
 
     # REGISTER
     app.register_blueprint(dashboard)
@@ -123,6 +125,8 @@ def create_app():
     app.register_blueprint(auth)
 
     app.register_blueprint(admin)
+
+    app.register_blueprint(backup)
 
 
     return app

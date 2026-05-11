@@ -2,66 +2,39 @@
 
 {% block content %}
 
-<h1 class="mb-4">
-
-Add Labour
-
-</h1>
-
-<div class="card p-4">
-
-<form method="POST">
-
-<div class="mb-3">
-
-<label class="mb-2">
-
-Name
-
-</label>
-
-<input type="text"
-       name="name"
-       class="form-control">
-
+<div class="page-header">
+    <h1 class="page-title">Add Labour</h1>
 </div>
 
-<div class="mb-3">
+<div class="card">
 
-<label class="mb-2">
+    <div class="card-body">
 
-Specialization
+    <form method="POST">
 
-</label>
+        <div class="mb-3">
+            <label class="mb-2">Name</label>
+            <input type="text" name="name" class="form-control" required>
+        </div>
 
-<input type="text"
-       name="specialization"
-       class="form-control">
+        <div class="mb-3">
+            <label class="mb-2">Specialization</label>
+            <input type="text" name="specialization" class="form-control">
+        </div>
 
-</div>
+        <div class="mb-4">
+            <label class="mb-2">Hourly Rate (BD)</label>
+            <input type="number" step="0.01" name="hourly_rate"
+                   class="form-control" required>
+        </div>
 
-<div class="mb-4">
+        <button class="btn btn-primary" style="height:48px;padding:0 32px;">
+            Save Labour
+        </button>
 
-<label class="mb-2">
+    </form>
 
-Hourly Rate
-
-</label>
-
-<input type="number"
-       step="0.01"
-       name="hourly_rate"
-       class="form-control">
-
-</div>
-
-<button class="btn btn-primary">
-
-Save Labour
-
-</button>
-
-</form>
+    </div>
 
 </div>
 

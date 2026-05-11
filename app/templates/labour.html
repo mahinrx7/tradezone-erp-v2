@@ -2,89 +2,58 @@
 
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-
-<h1>
-
-Labour
-
-</h1>
-
-<a href="/add_labour"
-   class="btn btn-primary">
-
-Add Labour
-
-</a>
-
+<div class="page-header">
+    <h1 class="page-title">Labour</h1>
+    <a href="/add_labour" class="btn btn-primary">Add Labour</a>
 </div>
 
-<div class="card p-4">
+<div class="card">
 
-<div class="table-responsive">
+    <div class="table-responsive">
 
-<table class="table table-dark table-hover">
+        <table class="table table-dark table-hover">
 
-<thead>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Specialization</th>
+                    <th>Rate/hr</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
 
-<tr>
+            <tbody>
 
-<th>ID</th>
-<th>Name</th>
-<th>Specialization</th>
-<th>Rate</th>
-<th>Edit</th>
-<th>Delete</th>
+                {% for worker in labour %}
 
-</tr>
+                <tr>
+                    <td>{{ worker.id }}</td>
+                    <td><strong>{{ worker.name }}</strong></td>
+                    <td>{{ worker.specialization or '-' }}</td>
+                    <td>BD {{ "%.2f"|format(worker.hourly_rate) }}</td>
+                    <td>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <a href="/edit_labour/{{ worker.id }}"
+                               class="btn btn-warning btn-sm">
+                                Edit
+                            </a>
+                            <a href="/delete_labour/{{ worker.id }}"
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirm('Delete this worker?')">
+                                Delete
+                            </a>
+                        </div>
+                    </td>
+                </tr>
 
-</thead>
+                {% endfor %}
 
-<tbody>
+            </tbody>
 
-{% for worker in labour %}
+        </table>
 
-<tr>
-
-<td>{{ worker.id }}</td>
-
-<td>{{ worker.name }}</td>
-
-<td>{{ worker.specialization }}</td>
-
-<td>BD {{ worker.hourly_rate }}</td>
-
-<td>
-
-<a href="/edit_labour/{{ worker.id }}"
-   class="btn btn-sm btn-warning">
-
-Edit
-
-</a>
-
-</td>
-
-<td>
-
-<a href="/delete_labour/{{ worker.id }}"
-   class="btn btn-sm btn-danger">
-
-Delete
-
-</a>
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-
-</div>
+    </div>
 
 </div>
 

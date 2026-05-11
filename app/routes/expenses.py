@@ -3,9 +3,11 @@ from flask_login import login_required
 from app.models import db, Expense, Site, WorkEntry, Labour
 from datetime import datetime
 import pandas as pd
-from reportlab.platypus import SimpleDocTemplate, Table
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
 import os
+import tempfile
 
 expenses = Blueprint("expenses", __name__)
 
@@ -24,14 +26,10 @@ def view_expenses():
         query = query.filter_by(site_id=site_id)
 
     if start_date:
-        query = query.filter(
-            Expense.date >= datetime.strptime(start_date, "%Y-%m-%d").date()
-        )
+        query = query.filter(Expense.date >= start_date)
 
     if end_date:
-        query = query.filter(
-            Expense.date <= datetime.strptime(end_date, "%Y-%m-%d").date()
-        )
+        query = query.filter(Expense.date <= end_date)
 
     expenses_data = query.order_by(Expense.id.desc()).all()
 
@@ -80,7 +78,11 @@ def add_expense():
 
         if receipt and receipt.filename != "":
 
-            os.makedirs("app/static/receipts", exist_ok=True)
+            upload_dir = os.path.join(
+                os.path.dirname(os.path.dirname(__file__)),
+                "static", "receipts"
+            )
+            os.makedirs(upload_dir, exist_ok=True)
 
             filename = (
                 str(datetime.now().timestamp()).replace(".", "")
@@ -88,19 +90,14 @@ def add_expense():
                 + receipt.filename
             )
 
-            receipt.save(
-                os.path.join("app/static/receipts", filename)
-            )
+            receipt.save(os.path.join(upload_dir, filename))
 
         expense = Expense(
             site_id=request.form["site_id"],
             category=request.form["category"],
             description=request.form["description"],
             amount=request.form["amount"],
-            date=datetime.strptime(
-                request.form["date"],
-                "%Y-%m-%d"
-            ).date(),
+            date=request.form["date"],
             receipt_image=filename
         )
 
@@ -149,13 +146,18 @@ def export_expenses_excel():
 
     df = pd.DataFrame(data)
 
-    file_path = "expenses.xlsx"
+    tmp = tempfile.NamedTemporaryFile(
+        delete=False,
+        suffix=".xlsx"
+    )
+    tmp.close()
 
-    df.to_excel(file_path, index=False)
+    df.to_excel(tmp.name, index=False)
 
     return send_file(
-        file_path,
-        as_attachment=True
+        tmp.name,
+        as_attachment=True,
+        download_name="expenses_report.xlsx"
     )
 
 
@@ -165,10 +167,14 @@ def export_expenses_pdf():
 
     expenses_data = Expense.query.all()
 
-    file_path = "expenses.pdf"
+    tmp = tempfile.NamedTemporaryFile(
+        delete=False,
+        suffix=".pdf"
+    )
+    tmp.close()
 
     pdf = SimpleDocTemplate(
-        file_path,
+        tmp.name,
         pagesize=letter
     )
 
@@ -192,9 +198,26 @@ def export_expenses_pdf():
 
     table = Table(data)
 
+    style = TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1a1a1a")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, 0), 10),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
+        ("TOPPADDING", (0, 0), (-1, 0), 10),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("FONTSIZE", (0, 1), (-1, -1), 9),
+        ("TOPPADDING", (0, 1), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 1), (-1, -1), 6),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f5f5f5")]),
+    ])
+
+    table.setStyle(style)
+
     pdf.build([table])
 
     return send_file(
-        file_path,
-        as_attachment=True
+        tmp.name,
+        as_attachment=True,
+        download_name="expenses_report.pdf"
     )

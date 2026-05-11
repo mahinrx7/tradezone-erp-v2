@@ -2,188 +2,102 @@
 
 {% block content %}
 
-<h1 class="mb-4">
-
-Client Payments
-
-</h1>
+<div class="page-header">
+    <h1 class="page-title">Client Payments</h1>
+</div>
 
 
-<div class="card p-4 mb-4">
+<div class="card mb-4">
 
-<form method="POST"
-      action="/add_payment">
+    <div class="card-body">
 
-<div class="row g-3 align-items-end">
+    <form method="POST" action="/add_payment">
 
+        <div class="row g-3 align-items-end">
 
-<div class="col-lg-3 col-md-6">
+            <div class="col-lg-3 col-md-6">
+                <label class="mb-2">Site</label>
+                <select name="site_id" class="form-control" required>
+                    {% for site in sites %}
+                    <option value="{{ site.id }}">{{ site.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-<label class="mb-2">
+            <div class="col-lg-2 col-md-6">
+                <label class="mb-2">Amount</label>
+                <input type="number" step="0.01" name="amount"
+                       class="form-control" required>
+            </div>
 
-Site
+            <div class="col-lg-3 col-md-6">
+                <label class="mb-2">Notes</label>
+                <input type="text" name="notes" class="form-control">
+            </div>
 
-</label>
+            <div class="col-lg-2 col-md-6">
+                <label class="mb-2">Date</label>
+                <input type="date" name="date" class="form-control" required>
+            </div>
 
-<select name="site_id"
-        class="form-control">
+            <div class="col-lg-2 col-md-12">
+                <button class="btn btn-primary payment-save-btn">
+                    Save Payment
+                </button>
+            </div>
 
-{% for site in sites %}
+        </div>
 
-<option value="{{ site.id }}">
+    </form>
 
-{{ site.name }}
-
-</option>
-
-{% endfor %}
-
-</select>
+    </div>
 
 </div>
 
 
-<div class="col-lg-2 col-md-6">
-
-<label class="mb-2">
-
-Amount
-
-</label>
-
-<input type="number"
-       step="0.01"
-       name="amount"
-       class="form-control">
-
-</div>
-
-
-<div class="col-lg-3 col-md-6">
-
-<label class="mb-2">
-
-Notes
-
-</label>
-
-<input type="text"
-       name="notes"
-       class="form-control">
-
-</div>
-
-
-<div class="col-lg-2 col-md-6">
-
-<label class="mb-2">
-
-Date
-
-</label>
-
-<input type="date"
-       name="date"
-       class="form-control">
-
-</div>
-
-
-<div class="col-lg-2 col-md-12">
-
-<button class="btn btn-primary payment-save-btn">
-
-Save Payment
-
-</button>
-
-</div>
-
-
-</div>
-
-</form>
-
-</div>
-
-
-<div class="card p-4">
-
-<div class="table-responsive">
-
-<table class="table table-dark table-hover align-middle">
-
-<thead>
-
-<tr>
-
-<th>ID</th>
-<th>Site</th>
-<th>Amount</th>
-<th>Notes</th>
-<th>Date</th>
-<th>Delete</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-{% for payment in payments %}
-
-<tr>
-
-<td>
-
-{{ payment.id }}
-
-</td>
-
-<td>
-
-{{ payment.site.name }}
-
-</td>
-
-<td>
-
-BD {{ payment.amount }}
-
-</td>
-
-<td>
-
-{{ payment.notes }}
-
-</td>
-
-<td>
-
-{{ payment.date }}
-
-</td>
-
-<td>
-
-<a href="/delete_payment/{{ payment.id }}"
-   class="btn btn-danger btn-sm">
-
-Delete
-
-</a>
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-
-</div>
+<div class="card">
+
+    <div class="table-responsive">
+
+        <table class="table table-dark table-hover align-middle">
+
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Site</th>
+                    <th>Amount</th>
+                    <th>Notes</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for payment in payments %}
+
+                <tr>
+                    <td>{{ payment.id }}</td>
+                    <td><strong>{{ payment.site.name if payment.site else '-' }}</strong></td>
+                    <td><strong>BD {{ "%.2f"|format(payment.amount) }}</strong></td>
+                    <td>{{ payment.notes or '-' }}</td>
+                    <td>{{ payment.date }}</td>
+                    <td>
+                        <a href="/delete_payment/{{ payment.id }}"
+                           class="btn btn-danger btn-sm"
+                           onclick="return confirm('Delete this payment?')">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
 
 </div>
 

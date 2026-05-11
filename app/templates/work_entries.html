@@ -2,207 +2,118 @@
 
 {% block content %}
 
-<h1 class="mb-4">
-
-Work Entries
-
-</h1>
+<div class="page-header">
+    <h1 class="page-title">Work Entries</h1>
+</div>
 
 
-<div class="card p-4 mb-4">
+<div class="card mb-4">
 
-<form method="POST"
-      action="/add_work_entry">
+    <div class="card-body">
 
-<div class="row">
+    <form method="POST" action="/add_work_entry">
 
-<div class="col-md-3 mb-3">
+        <div class="row g-3 align-items-end">
 
-<label class="mb-2">
+            <div class="col-lg-3 col-md-6">
+                <label class="mb-2">Labour</label>
+                <select name="labour_id" class="form-control" required>
+                    {% for worker in labour %}
+                    <option value="{{ worker.id }}">
+                        {{ worker.name }} - {{ worker.specialization }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
 
-Labour
+            <div class="col-lg-3 col-md-6">
+                <label class="mb-2">Site</label>
+                <select name="site_id" class="form-control" required>
+                    {% for site in sites %}
+                    <option value="{{ site.id }}">{{ site.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-</label>
+            <div class="col-lg-2 col-md-6">
+                <label class="mb-2">Hours</label>
+                <input type="number" step="0.1" name="hours"
+                       class="form-control" required>
+            </div>
 
-<select name="labour_id"
-        class="form-control">
+            <div class="col-lg-2 col-md-6">
+                <label class="mb-2">Date</label>
+                <input type="date" name="date"
+                       class="form-control" required>
+            </div>
 
-{% for worker in labour %}
+            <div class="col-lg-2 col-md-12">
+                <button class="btn btn-primary w-100"
+                        style="height:48px;">
+                    Save Entry
+                </button>
+            </div>
 
-<option value="{{ worker.id }}">
+        </div>
 
-{{ worker.name }}
--
-{{ worker.specialization }}
+    </form>
 
-</option>
-
-{% endfor %}
-
-</select>
+    </div>
 
 </div>
 
 
-<div class="col-md-3 mb-3">
-
-<label class="mb-2">
-
-Site
-
-</label>
-
-<select name="site_id"
-        class="form-control">
-
-{% for site in sites %}
-
-<option value="{{ site.id }}">
-
-{{ site.name }}
-
-</option>
-
-{% endfor %}
-
-</select>
-
-</div>
-
-
-<div class="col-md-2 mb-3">
-
-<label class="mb-2">
-
-Hours
-
-</label>
-
-<input type="number"
-       step="0.1"
-       name="hours"
-       class="form-control">
-
-</div>
-
-
-<div class="col-md-2 mb-3">
-
-<label class="mb-2">
-
-Date
-
-</label>
-
-<input type="date"
-       name="date"
-       class="form-control">
-
-</div>
-
-
-<div class="col-md-2 d-flex align-items-end">
-
-<button class="btn btn-primary w-100">
-
-Save
-
-</button>
-
-</div>
-
-</div>
-
-</form>
-
-</div>
-
-
-<div class="card p-4">
-
-<div class="table-responsive">
-
-<table class="table table-dark table-hover">
-
-<thead>
-
-<tr>
-
-<th>ID</th>
-<th>Labour</th>
-<th>Site</th>
-<th>Hours</th>
-<th>Date</th>
-<th>Cost</th>
-<th>Delete</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-{% for entry in entries %}
-
-<tr>
-
-<td>
-
-{{ entry.id }}
-
-</td>
-
-<td>
-
-{{ entry.labour.name }}
-
-</td>
-
-<td>
-
-{{ entry.site.name }}
-
-</td>
-
-<td>
-
-{{ entry.hours }}
-
-</td>
-
-<td>
-
-{{ entry.date }}
-
-</td>
-
-<td>
-
-BD
-{{ entry.hours * entry.labour.hourly_rate }}
-
-</td>
-
-<td>
-
-<a href="/delete_work_entry/{{ entry.id }}"
-   class="btn btn-danger btn-sm">
-
-Delete
-
-</a>
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-
-</div>
+<div class="card">
+
+    <div class="table-responsive">
+
+        <table class="table table-dark table-hover">
+
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Labour</th>
+                    <th>Site</th>
+                    <th>Hours</th>
+                    <th>Date</th>
+                    <th>Cost</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for entry in entries %}
+
+                <tr>
+                    <td>{{ entry.id }}</td>
+                    <td><strong>{{ entry.labour.name if entry.labour else '-' }}</strong></td>
+                    <td>{{ entry.site.name if entry.site else '-' }}</td>
+                    <td>{{ entry.hours }}</td>
+                    <td>{{ entry.date }}</td>
+                    <td>
+                        {% if entry.labour %}
+                        <strong>BD {{ "%.2f"|format(entry.hours * entry.labour.hourly_rate) }}</strong>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/delete_work_entry/{{ entry.id }}"
+                           class="btn btn-danger btn-sm"
+                           onclick="return confirm('Delete this entry?')">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
 
 </div>
 

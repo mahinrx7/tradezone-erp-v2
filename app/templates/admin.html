@@ -2,141 +2,110 @@
 
 {% block content %}
 
-<h1 class="mb-4">
-
-Admin Panel
-
-</h1>
+<div class="page-header">
+    <h1 class="page-title">Admin Panel</h1>
+</div>
 
 
-<div class="card p-4 mb-4">
+<div class="card mb-4">
 
-<h3 class="mb-4">
+    <div class="card-body">
 
-Add Supervisor
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:20px;color:var(--text-secondary);">
+            Add Supervisor
+        </h3>
 
-</h3>
+        <form method="POST" action="/add_supervisor">
 
-<form method="POST"
-      action="/add_supervisor">
+            <div class="row g-3 align-items-end">
 
-<div class="row g-3">
+                <div class="col-lg-5 col-md-6">
+                    <label class="mb-2">Username</label>
+                    <input type="text" name="username"
+                           placeholder="Enter username"
+                           class="form-control" required>
+                </div>
 
-<div class="col-lg-5">
+                <div class="col-lg-5 col-md-6">
+                    <label class="mb-2">Password</label>
+                    <input type="password" name="password"
+                           placeholder="Enter password"
+                           class="form-control" required>
+                </div>
 
-<input type="text"
-       name="username"
-       placeholder="Username"
-       class="form-control"
-       required>
+                <div class="col-lg-2 col-md-12">
+                    <button class="btn btn-primary w-100" style="height:48px;">
+                        Create
+                    </button>
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
 
 </div>
 
 
-<div class="col-lg-5">
+<div class="card">
 
-<input type="password"
-       name="password"
-       placeholder="Password"
-       class="form-control"
-       required>
+    <div class="card-body">
 
-</div>
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:20px;color:var(--text-secondary);">
+            Users
+        </h3>
 
+        <div class="table-responsive">
 
-<div class="col-lg-2">
+            <table class="table table-dark table-hover align-middle">
 
-<button class="btn btn-primary w-100">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
 
-Create
+                <tbody>
 
-</button>
+                    {% for user in users %}
 
-</div>
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td><strong>{{ user.username }}</strong></td>
+                        <td>
+                            <span style="background:{% if user.role == 'admin' %}rgba(10,132,255,0.12);color:#0a84ff{% else %}rgba(255,159,10,0.12);color:#ff9f0a{% endif %};
+                                         padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;">
+                                {{ user.role }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if user.id != current_user.id %}
+                            <a href="/delete_user/{{ user.id }}"
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirm('Delete this user?')">
+                                Delete
+                            </a>
+                            {% else %}
+                            <span style="color:var(--text-tertiary);font-size:13px;">
+                                You
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
 
-</div>
+                    {% endfor %}
 
-</form>
+                </tbody>
 
-</div>
+            </table>
 
+        </div>
 
-
-<div class="card p-4">
-
-<h3 class="mb-4">
-
-Users
-
-</h3>
-
-<div class="table-responsive">
-
-<table class="table table-dark table-hover align-middle">
-
-<thead>
-
-<tr>
-
-<th>ID</th>
-<th>Username</th>
-<th>Role</th>
-<th>Delete</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-{% for user in users %}
-
-<tr>
-
-<td>
-{{ user.id }}
-</td>
-
-<td>
-{{ user.username }}
-</td>
-
-<td>
-{{ user.role }}
-</td>
-
-<td>
-
-{% if user.id != current_user.id %}
-
-<a href="/delete_user/{{ user.id }}"
-   class="btn btn-danger btn-sm">
-
-Delete
-
-</a>
-
-{% else %}
-
-<span class="text-secondary">
-
-Current User
-
-</span>
-
-{% endif %}
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-
-</div>
+    </div>
 
 </div>
 

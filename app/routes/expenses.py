@@ -79,47 +79,9 @@ def view_expenses():
 
     labour_data = labour_query.all()
 
-    combined_expenses = []
-
-    for expense in expenses_data:
-
-        combined_expenses.append({
-
-            "id": expense.id,
-
-            "site": expense.site.name
-            if expense.site else "",
-
-            "category": expense.category,
-
-            "description": expense.description,
-
-            "amount": expense.amount,
-
-            "date": expense.date
-        })
-
-    for worker in labour_data:
-
-        combined_expenses.append({
-
-            "id": worker.id,
-
-            "site": worker.site.name
-            if worker.site else "",
-
-            "category": "Labour",
-
-            "description": worker.worker_name,
-
-            "amount": worker.total_amount,
-
-            "date": worker.date
-        })
-
     total_expense = sum(
-        item["amount"]
-        for item in combined_expenses
+        expense.amount
+        for expense in expenses_data
     )
 
     labour_total = sum(
@@ -133,7 +95,9 @@ def view_expenses():
 
         "expenses.html",
 
-        expenses=combined_expenses,
+        expenses=expenses_data,
+
+        labour_data=labour_data,
 
         total_expense=total_expense,
 

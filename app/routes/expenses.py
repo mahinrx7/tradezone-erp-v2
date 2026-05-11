@@ -85,7 +85,21 @@ def view_expenses():
     )
 
     labour_total = sum(
-        worker.total_amount
+
+        (
+            float(worker.daily_rate or 0)
+            *
+            float(worker.days_worked or 0)
+        )
+
+        +
+
+        (
+            float(worker.hourly_rate or 0)
+            *
+            float(worker.hours_worked or 0)
+        )
+
         for worker in labour_data
     )
 
@@ -271,13 +285,6 @@ def export_expenses_excel():
 
             cell.font = cell.font.copy(
                 bold=True
-            )
-
-            cell.fill = (
-                cell.fill.copy(
-                    fill_type="solid",
-                    start_color="1F2937"
-                )
             )
 
         for column in worksheet.columns:

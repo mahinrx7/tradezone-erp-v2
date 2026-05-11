@@ -81,8 +81,8 @@ class Labour(db.Model):
         nullable=False
     )
 
-    speciality = db.Column(
-        db.String(200)
+    specialization = db.Column(
+        db.String(100)
     )
 
     hourly_rate = db.Column(

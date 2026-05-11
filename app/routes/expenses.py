@@ -17,7 +17,6 @@ from app.models import Labour
 from datetime import datetime
 
 import pandas as pd
-
 import os
 
 from io import BytesIO
@@ -80,26 +79,12 @@ def view_expenses():
     labour_data = labour_query.all()
 
     total_expense = sum(
-        expense.amount
+        float(expense.amount or 0)
         for expense in expenses_data
     )
 
     labour_total = sum(
-
-        (
-            float(worker.daily_rate or 0)
-            *
-            float(worker.days_worked or 0)
-        )
-
-        +
-
-        (
-            float(worker.hourly_rate or 0)
-            *
-            float(worker.hours_worked or 0)
-        )
-
+        float(worker.hourly_rate or 0)
         for worker in labour_data
     )
 
@@ -269,11 +254,8 @@ def export_expenses_excel():
     ) as writer:
 
         df.to_excel(
-
             writer,
-
             index=False,
-
             sheet_name="Expenses"
         )
 
@@ -348,9 +330,7 @@ def export_expenses_pdf():
     output = BytesIO()
 
     doc = SimpleDocTemplate(
-
         output,
-
         pagesize=letter
     )
 
@@ -359,9 +339,7 @@ def export_expenses_pdf():
     elements = []
 
     title = Paragraph(
-
         "Tradezone ERP Expense Report",
-
         styles["Title"]
     )
 
@@ -372,15 +350,10 @@ def export_expenses_pdf():
     )
 
     table_data = [[
-
         "Site",
-
         "Category",
-
         "Description",
-
         "Amount",
-
         "Date"
     ]]
 

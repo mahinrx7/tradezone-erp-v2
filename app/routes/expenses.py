@@ -12,25 +12,9 @@ from app import db
 
 from app.models import Expense
 from app.models import Site
-from app.models import Labour
-
-from datetime import datetime
 
 import pandas as pd
-import os
-
 from io import BytesIO
-
-from reportlab.platypus import SimpleDocTemplate
-from reportlab.platypus import Table
-from reportlab.platypus import TableStyle
-from reportlab.platypus import Paragraph
-from reportlab.platypus import Spacer
-
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.pagesizes import letter
-
 
 expenses = Blueprint(
     "expenses",
@@ -42,53 +26,14 @@ expenses = Blueprint(
 @login_required
 def view_expenses():
 
-    site_id = request.args.get("site_id")
+    expenses_data = Expense.query.all()
 
-    start_date = request.args.get("start_date")
-
-    end_date = request.args.get("end_date")
-
-    expense_query = Expense.query
-
-    labour_query = Labour.query
-
-    if site_id and site_id != "all":
-
-        expense_query = expense_query.filter_by(
-            site_id=site_id
-        )
-
-        labour_query = labour_query.filter_by(
-            site_id=site_id
-        )
-
-    if start_date and end_date:
-
-        expense_query = expense_query.filter(
-            Expense.date >= start_date,
-            Expense.date <= end_date
-        )
-
-        labour_query = labour_query.filter(
-            Labour.date >= start_date,
-            Labour.date <= end_date
-        )
-
-    expenses_data = expense_query.all()
-
-    labour_data = labour_query.all()
+    sites = Site.query.all()
 
     total_expense = sum(
         float(expense.amount or 0)
         for expense in expenses_data
     )
-
-    labour_total = sum(
-        float(worker.hourly_rate or 0)
-        for worker in labour_data
-    )
-
-    sites = Site.query.all()
 
     return render_template(
 
@@ -96,13 +41,9 @@ def view_expenses():
 
         expenses=expenses_data,
 
-        labour_data=labour_data,
+        sites=sites,
 
-        total_expense=total_expense,
-
-        labour_total=labour_total,
-
-        sites=sites
+        total_expense=total_expense
     )
 
 
@@ -117,40 +58,6 @@ def add_expense():
 
     if request.method == "POST":
 
-        receipt_file = request.files.get(
-            "receipt"
-        )
-
-        filename = None
-
-        if receipt_file and receipt_file.filename:
-
-            upload_folder = os.path.join(
-                "app",
-                "static",
-                "receipts"
-            )
-
-            os.makedirs(
-                upload_folder,
-                exist_ok=True
-            )
-
-            filename = (
-                str(datetime.now().timestamp())
-                + "_"
-                + receipt_file.filename
-            )
-
-            receipt_path = os.path.join(
-                upload_folder,
-                filename
-            )
-
-            receipt_file.save(
-                receipt_path
-            )
-
         expense = Expense(
 
             site_id=request.form["site_id"],
@@ -161,9 +68,7 @@ def add_expense():
 
             amount=request.form["amount"],
 
-            date=request.form["date"],
-
-            receipt=filename
+            date=request.form["date"]
         )
 
         db.session.add(expense)
@@ -237,7 +142,7 @@ def export_expenses_excel():
             "Description":
             expense.description,
 
-            "Amount (BD)":
+            "Amount":
             expense.amount,
 
             "Date":
@@ -259,47 +164,6 @@ def export_expenses_excel():
             sheet_name="Expenses"
         )
 
-        worksheet = writer.sheets[
-            "Expenses"
-        ]
-
-        for cell in worksheet[1]:
-
-            cell.font = cell.font.copy(
-                bold=True
-            )
-
-        for column in worksheet.columns:
-
-            max_length = 0
-
-            column_letter = (
-                column[0].column_letter
-            )
-
-            for cell in column:
-
-                try:
-
-                    if len(
-                        str(cell.value)
-                    ) > max_length:
-
-                        max_length = len(
-                            str(cell.value)
-                        )
-
-                except:
-                    pass
-
-            adjusted_width = (
-                max_length + 5
-            )
-
-            worksheet.column_dimensions[
-                column_letter
-            ].width = adjusted_width
-
     output.seek(0)
 
     return send_file(
@@ -308,130 +172,10 @@ def export_expenses_excel():
 
         as_attachment=True,
 
-        download_name="expenses_report.xlsx",
+        download_name="expenses.xlsx",
 
         mimetype=(
-            "application/"
-            "vnd.openxmlformats-"
-            "officedocument."
-            "spreadsheetml.sheet"
+            "application/vnd.openxmlformats-"
+            "officedocument.spreadsheetml.sheet"
         )
-    )
-
-
-@expenses.route(
-    "/export_expenses_pdf"
-)
-@login_required
-def export_expenses_pdf():
-
-    expenses_data = Expense.query.all()
-
-    output = BytesIO()
-
-    doc = SimpleDocTemplate(
-        output,
-        pagesize=letter
-    )
-
-    styles = getSampleStyleSheet()
-
-    elements = []
-
-    title = Paragraph(
-        "Tradezone ERP Expense Report",
-        styles["Title"]
-    )
-
-    elements.append(title)
-
-    elements.append(
-        Spacer(1, 20)
-    )
-
-    table_data = [[
-        "Site",
-        "Category",
-        "Description",
-        "Amount",
-        "Date"
-    ]]
-
-    for expense in expenses_data:
-
-        table_data.append([
-
-            expense.site.name
-            if expense.site else "",
-
-            expense.category,
-
-            expense.description,
-
-            f"BD {expense.amount}",
-
-            str(expense.date)
-        ])
-
-    table = Table(
-        table_data
-    )
-
-    table.setStyle(
-
-        TableStyle([
-
-            (
-                "BACKGROUND",
-                (0, 0),
-                (-1, 0),
-                colors.black
-            ),
-
-            (
-                "TEXTCOLOR",
-                (0, 0),
-                (-1, 0),
-                colors.white
-            ),
-
-            (
-                "FONTNAME",
-                (0, 0),
-                (-1, 0),
-                "Helvetica-Bold"
-            ),
-
-            (
-                "GRID",
-                (0, 0),
-                (-1, -1),
-                1,
-                colors.grey
-            ),
-
-            (
-                "BOTTOMPADDING",
-                (0, 0),
-                (-1, 0),
-                12
-            )
-        ])
-    )
-
-    elements.append(table)
-
-    doc.build(elements)
-
-    output.seek(0)
-
-    return send_file(
-
-        output,
-
-        as_attachment=True,
-
-        download_name="expenses_report.pdf",
-
-        mimetype="application/pdf"
     )

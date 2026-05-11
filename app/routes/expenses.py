@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, send_file
 from flask_login import login_required
-from app.models import db, Expense, Site, Labour
+from app.models import db, Expense, Site, WorkEntry, Labour
 from datetime import datetime
 import pandas as pd
 from reportlab.platypus import SimpleDocTemplate, Table
@@ -35,12 +35,12 @@ def view_expenses():
 
     expenses_data = query.order_by(Expense.id.desc()).all()
 
-    labour_query = Labour.query
+    work_query = WorkEntry.query
 
     if site_id and site_id != "all":
-        labour_query = labour_query.filter_by(site_id=site_id)
+        work_query = work_query.filter_by(site_id=site_id)
 
-    labour_data = labour_query.all()
+    work_entries = work_query.all()
 
     total_expense = sum(
         float(expense.amount or 0)
@@ -48,8 +48,10 @@ def view_expenses():
     )
 
     labour_total = sum(
-        float(worker.hourly_rate or 0)
-        for worker in labour_data
+        float(entry.hours or 0) *
+        float(entry.labour.hourly_rate or 0)
+        for entry in work_entries
+        if entry.labour
     )
 
     net_total = total_expense + labour_total
@@ -142,7 +144,7 @@ def export_expenses_excel():
             "Category": expense.category,
             "Description": expense.description,
             "Amount": expense.amount,
-            "Date": expense.date
+            "Date": str(expense.date)
         })
 
     df = pd.DataFrame(data)
@@ -190,9 +192,7 @@ def export_expenses_pdf():
 
     table = Table(data)
 
-    elements = [table]
-
-    pdf.build(elements)
+    pdf.build([table])
 
     return send_file(
         file_path,

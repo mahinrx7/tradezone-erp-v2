@@ -12,9 +12,12 @@ from app import db
 
 from app.models import Expense
 from app.models import Site
+from app.models import Labour
 
 import pandas as pd
+
 from io import BytesIO
+
 
 expenses = Blueprint(
     "expenses",
@@ -28,11 +31,23 @@ def view_expenses():
 
     expenses_data = Expense.query.all()
 
+    labour_data = Labour.query.all()
+
     sites = Site.query.all()
 
     total_expense = sum(
         float(expense.amount or 0)
         for expense in expenses_data
+    )
+
+    labour_total = sum(
+        float(worker.hourly_rate or 0)
+        for worker in labour_data
+    )
+
+    net_total = (
+        total_expense +
+        labour_total
     )
 
     return render_template(
@@ -41,9 +56,15 @@ def view_expenses():
 
         expenses=expenses_data,
 
+        labour_data=labour_data,
+
         sites=sites,
 
-        total_expense=total_expense
+        total_expense=total_expense,
+
+        labour_total=labour_total,
+
+        net_total=net_total
     )
 
 

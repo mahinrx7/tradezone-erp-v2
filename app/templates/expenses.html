@@ -2,277 +2,256 @@
 
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="page-header">
 
-<h1>
+    <h1>Expenses</h1>
 
-Expenses
-
-</h1>
-
-<a href="/add_expense"
-   class="btn btn-primary">
-
-Add Expense
-
-</a>
+    <a href="/add_expense" class="btn">
+        Add Expense
+    </a>
 
 </div>
 
 
+<div class="card">
 
-<div class="card p-4 mb-4">
+    <form method="GET" action="/expenses" class="filter-form">
 
-<form method="GET">
+        <div class="form-group">
 
-<div class="row g-3 align-items-end">
+            <label>
+                Site
+            </label>
 
+            <select name="site_id">
 
-<div class="col-lg-4">
+                <option value="all">
+                    All Sites
+                </option>
 
-<label class="mb-2">
+                {% for site in sites %}
 
-Site
+                <option value="{{ site.id }}">
 
-</label>
+                    {{ site.name }}
 
-<select name="site_id"
-        class="form-control">
+                </option>
 
-<option value="">
+                {% endfor %}
 
-All Sites
+            </select>
 
-</option>
-
-{% for site in sites %}
-
-<option value="{{ site.id }}">
-
-{{ site.name }}
-
-</option>
-
-{% endfor %}
-
-</select>
-
-</div>
+        </div>
 
 
+        <div class="form-group">
 
-<div class="col-lg-3">
+            <label>
+                From
+            </label>
 
-<label class="mb-2">
+            <input
+                type="date"
+                name="start_date"
+            >
 
-From
-
-</label>
-
-<input type="date"
-       name="start_date"
-       class="form-control">
-
-</div>
+        </div>
 
 
+        <div class="form-group">
 
-<div class="col-lg-3">
+            <label>
+                To
+            </label>
 
-<label class="mb-2">
+            <input
+                type="date"
+                name="end_date"
+            >
 
-To
+        </div>
 
-</label>
 
-<input type="date"
-       name="end_date"
-       class="form-control">
+        <button type="submit" class="btn">
+
+            Apply
+
+        </button>
+
+    </form>
 
 </div>
 
 
+<div class="card">
 
-<div class="col-lg-2">
+    <h2>
 
-<button class="btn btn-primary w-100">
+        Net Expenses:
+        BD {{ "%.2f"|format(net_total) }}
 
-Apply
+    </h2>
 
-</button>
+    <p>
 
-</div>
+        Including Labour Cost:
+        BD {{ "%.2f"|format(labour_total) }}
 
-</div>
+    </p>
 
-</form>
+    <p>
 
-</div>
+        Material / Expense Cost:
+        BD {{ "%.2f"|format(total_expense) }}
 
-
-
-<div class="card p-4 mb-4">
-
-<h2>
-
-Net Expenses:
-BD {{ total }}
-
-</h2>
-
-<p class="text-secondary">
-
-Including Labour Cost:
-BD {{ labour_total }}
-
-</p>
+    </p>
 
 </div>
 
 
+<div class="card">
 
-<div class="card p-4">
+    <table>
 
-<div class="table-responsive">
+        <thead>
 
-<table class="table table-dark table-hover align-middle">
+            <tr>
 
-<thead>
+                <th>ID</th>
 
-<tr>
+                <th>Site</th>
 
-<th>ID</th>
-<th>Site</th>
-<th>Category</th>
-<th>Description</th>
-<th>Amount</th>
-<th>Date</th>
-<th>Receipt</th>
-<th>Delete</th>
+                <th>Category</th>
 
-</tr>
+                <th>Description</th>
 
-</thead>
+                <th>Amount</th>
 
-<tbody>
+                <th>Date</th>
 
-{% for item in expenses %}
+                <th>Receipt</th>
 
-<tr>
+                <th style="text-align:center;">
+                    Delete
+                </th>
 
-<td>
+            </tr>
 
-{{ item.id }}
-
-</td>
+        </thead>
 
 
-<td>
+        <tbody>
 
-{% if item.site %}
+            {% for expense in expenses %}
 
-{{ item.site.name }}
+            <tr>
 
-{% endif %}
+                <td>
+                    {{ expense.id }}
+                </td>
 
-</td>
+                <td>
 
+                    {% if expense.site %}
 
-<td>
+                        {{ expense.site.name }}
 
-{{ item.category }}
+                    {% else %}
 
-</td>
+                        -
 
+                    {% endif %}
 
-<td>
+                </td>
 
-{{ item.description }}
+                <td>
+                    {{ expense.category }}
+                </td>
 
-</td>
+                <td>
+                    {{ expense.description }}
+                </td>
 
+                <td>
+                    BD {{ expense.amount }}
+                </td>
 
-<td>
+                <td>
+                    {{ expense.date }}
+                </td>
 
-BD {{ item.amount }}
+                <td>
 
-</td>
+                    {% if expense.receipt %}
 
+                    <a
+                        href="{{ url_for('static', filename='receipts/' + expense.receipt) }}"
+                        target="_blank"
+                    >
+                        View
+                    </a>
 
-<td>
+                    {% else %}
 
-{{ item.date }}
+                    -
 
-</td>
+                    {% endif %}
 
+                </td>
 
-<td>
+                <td style="text-align:center;">
 
-{% if item.receipt_image %}
+                    <a
+                        href="/delete_expense/{{ expense.id }}"
+                        class="delete-btn"
+                        onclick="return confirm('Delete this expense?')"
+                    >
 
-<a href="/static/uploads/{{ item.receipt_image }}"
-   target="_blank"
-   class="btn btn-info btn-sm">
+                        Delete
 
-View
+                    </a>
 
-</a>
+                </td>
 
-{% else %}
+            </tr>
 
--
+            {% endfor %}
 
-{% endif %}
+        </tbody>
 
-</td>
-
-
-<td>
-
-</td>
-
-
-<td>
-
-<a href="/delete_expense/{{ item.id }}"
-   class="btn btn-danger btn-sm">
-
-Delete
-
-</a>
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-
-</div>
+    </table>
 
 </div>
 
 
+<div
+    style="
+        display:flex;
+        gap:15px;
+        margin-top:20px;
+    "
+>
 
-<div class="mt-4 d-flex gap-3">
+    <a
+        href="/export_expenses_excel"
+        class="btn"
+        style="background:#10b981;"
+    >
 
-<a href="/export_expenses_excel"
-   class="btn btn-success">
+        Export Excel
 
-Export Excel
-
-</a>
+    </a>
 
 
-<a href="/export_expenses_pdf"
-   class="btn btn-danger">
+    <a
+        href="/export_expenses_pdf"
+        class="btn"
+        style="background:#ef4444;"
+    >
 
-Export PDF
+        Export PDF
 
-</a>
+    </a>
 
 </div>
 

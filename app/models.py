@@ -116,6 +116,16 @@ class WorkEntry(db.Model):
         default=0
     )
 
+    start_time = db.Column(
+        db.String(10),
+        nullable=True
+    )
+
+    end_time = db.Column(
+        db.String(10),
+        nullable=True
+    )
+
     date = db.Column(
         db.String(50)
     )

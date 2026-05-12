@@ -17,6 +17,8 @@ from app.models import (
     Site
 )
 
+from datetime import datetime
+
 work_entries = Blueprint(
     "work_entries",
     __name__
@@ -55,14 +57,22 @@ def view_work_entries():
 @login_required
 def add_work_entry():
 
+    start_time = request.form["start_time"]
+    end_time = request.form["end_time"]
+
+    t1 = datetime.strptime(start_time, "%H:%M")
+    t2 = datetime.strptime(end_time, "%H:%M")
+    diff = (t2 - t1).total_seconds() / 3600.0
+    if diff < 0:
+        diff += 24
+    hours = round(diff, 2)
+
     entry = WorkEntry(
-
         labour_id=request.form["labour_id"],
-
         site_id=request.form["site_id"],
-
-        hours=request.form["hours"],
-
+        hours=hours,
+        start_time=start_time,
+        end_time=end_time,
         date=request.form["date"]
     )
 

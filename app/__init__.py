@@ -63,6 +63,7 @@ def create_app():
     from app.routes.auth import auth
     from app.routes.admin import admin
     from app.routes.backup import backup
+    from app.routes.labour_tracker import labour_tracker
 
     app.register_blueprint(dashboard)
     app.register_blueprint(sites)
@@ -74,6 +75,7 @@ def create_app():
     app.register_blueprint(auth)
     app.register_blueprint(admin)
     app.register_blueprint(backup)
+    app.register_blueprint(labour_tracker)
 
     @app.route("/health")
     def health():

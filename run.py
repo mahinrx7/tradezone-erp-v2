@@ -4,6 +4,8 @@ from app.models import User
 
 from flask_bcrypt import Bcrypt
 
+from sqlalchemy import text
+
 
 app = create_app()
 
@@ -13,6 +15,19 @@ bcrypt = Bcrypt(app)
 with app.app_context():
 
     db.create_all()
+
+    # SAFELY ADD NEW COLUMNS IF THEY DON'T EXIST
+    with db.engine.connect() as conn:
+        try:
+            conn.execute(text("ALTER TABLE work_entry ADD COLUMN start_time VARCHAR(10)"))
+            conn.commit()
+        except Exception:
+            conn.rollback()
+        try:
+            conn.execute(text("ALTER TABLE work_entry ADD COLUMN end_time VARCHAR(10)"))
+            conn.commit()
+        except Exception:
+            conn.rollback()
 
     # CREATE ADMIN IF NOT EXISTS
     existing = User.query.filter_by(

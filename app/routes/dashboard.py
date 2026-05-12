@@ -1,125 +1,67 @@
-from flask import (
-    Blueprint,
-    render_template
-)
-
+from flask import Blueprint, render_template
 from flask_login import login_required
-
 from sqlalchemy import func
-
-from app.models import (
-    Site,
-    Expense,
-    ClientPayment,
-    WorkEntry
-)
-
+from app.models import Site, Expense, ClientPayment, WorkEntry, Labour
 from app import db
 
-dashboard = Blueprint(
-    "dashboard",
-    __name__
-)
+dashboard = Blueprint("dashboard", __name__)
 
 
 @dashboard.route("/")
 @login_required
 def home():
-
     sites = Site.query.all()
+    total_sites = len(sites)
 
-    total_sites = Site.query.count()
+    expense_sums = dict(
+        db.session.query(
+            Expense.site_id,
+            func.sum(Expense.amount)
+        ).group_by(Expense.site_id).all()
+    )
 
-    total_expenses = db.session.query(
-        func.sum(Expense.amount)
-    ).scalar() or 0
+    payment_sums = dict(
+        db.session.query(
+            ClientPayment.site_id,
+            func.sum(ClientPayment.amount)
+        ).group_by(ClientPayment.site_id).all()
+    )
 
-    total_payments = db.session.query(
-        func.sum(ClientPayment.amount)
-    ).scalar() or 0
+    labour_sums = dict(
+        db.session.query(
+            WorkEntry.site_id,
+            func.sum(WorkEntry.hours * Labour.hourly_rate)
+        ).join(
+            Labour, WorkEntry.labour_id == Labour.id
+        ).group_by(WorkEntry.site_id).all()
+    )
+
+    total_expenses = sum(expense_sums.values()) or 0
+    total_payments = sum(payment_sums.values()) or 0
 
     dashboard_sites = []
 
     for site in sites:
-
-        # EXPENSES
-        expense_total = db.session.query(
-            func.sum(Expense.amount)
-        ).filter(
-            Expense.site_id == site.id
-        ).scalar() or 0
-
-
-        # PAYMENTS
-        payment_total = db.session.query(
-            func.sum(ClientPayment.amount)
-        ).filter(
-            ClientPayment.site_id == site.id
-        ).scalar() or 0
-
-
-        # LABOUR COST
-        work_entries = WorkEntry.query.filter_by(
-            site_id=site.id
-        ).all()
-
-        labour_total = 0
-
-        for entry in work_entries:
-
-            if entry.labour:
-                labour_total += (
-                    float(entry.hours or 0) *
-                    float(entry.labour.hourly_rate or 0)
-                )
-
-
-        # TOTAL COST
+        expense_total = float(expense_sums.get(site.id) or 0)
+        payment_total = float(payment_sums.get(site.id) or 0)
+        labour_total = float(labour_sums.get(site.id) or 0)
         total_cost = expense_total + labour_total
-
-
-        # PROFIT
         profit = payment_total - total_cost
-
-
-        # REMAINING
-        remaining = (
-            site.contract_amount -
-            payment_total
-        )
-
+        remaining = float(site.contract_amount or 0) - payment_total
 
         dashboard_sites.append({
-
             "site": site,
-
             "expenses": expense_total,
-
             "labour": labour_total,
-
             "payments": payment_total,
-
             "profit": profit,
-
             "remaining": remaining
         })
 
-
     return render_template(
-
         "dashboard.html",
-
         total_sites=total_sites,
-
-        total_expenses=round(
-            total_expenses,
-            2
-        ),
-
-        total_payments=round(
-            total_payments,
-            2
-        ),
-
+        total_expenses=round(float(total_expenses), 2),
+        total_payments=round(float(total_payments), 2),
         dashboard_sites=dashboard_sites
     )

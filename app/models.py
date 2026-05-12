@@ -101,12 +101,14 @@ class WorkEntry(db.Model):
 
     labour_id = db.Column(
         db.Integer,
-        db.ForeignKey("labour.id")
+        db.ForeignKey("labour.id"),
+        index=True
     )
 
     site_id = db.Column(
         db.Integer,
-        db.ForeignKey("site.id")
+        db.ForeignKey("site.id"),
+        index=True
     )
 
     hours = db.Column(
@@ -124,11 +126,13 @@ class WorkEntry(db.Model):
     )
 
     labour = db.relationship(
-        "Labour"
+        "Labour",
+        lazy="select"
     )
 
     site = db.relationship(
-        "Site"
+        "Site",
+        lazy="select"
     )
 
 
@@ -142,7 +146,8 @@ class Expense(db.Model):
 
     site_id = db.Column(
         db.Integer,
-        db.ForeignKey("site.id")
+        db.ForeignKey("site.id"),
+        index=True
     )
 
     category = db.Column(
@@ -159,7 +164,8 @@ class Expense(db.Model):
     )
 
     date = db.Column(
-        db.String(50)
+        db.String(50),
+        index=True
     )
 
     created_at = db.Column(
@@ -172,7 +178,8 @@ class Expense(db.Model):
     )
 
     site = db.relationship(
-        "Site"
+        "Site",
+        lazy="select"
     )
 
 
@@ -186,7 +193,8 @@ class ClientPayment(db.Model):
 
     site_id = db.Column(
         db.Integer,
-        db.ForeignKey("site.id")
+        db.ForeignKey("site.id"),
+        index=True
     )
 
     amount = db.Column(

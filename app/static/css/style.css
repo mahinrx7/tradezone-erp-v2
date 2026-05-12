@@ -920,7 +920,7 @@ input[type="file"].form-control{
     .sidebar{
         transform:translateX(-100%);
         width:280px;
-        padding-top:20px;
+        padding-top:68px;
     }
 
     .sidebar.open{

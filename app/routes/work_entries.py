@@ -7,6 +7,8 @@ from flask import (
 
 from flask_login import login_required
 
+from sqlalchemy.orm import joinedload
+
 from app import db
 
 from app.models import (
@@ -26,7 +28,10 @@ work_entries = Blueprint(
 @login_required
 def view_work_entries():
 
-    entries = WorkEntry.query.order_by(
+    entries = WorkEntry.query.options(
+        joinedload(WorkEntry.labour),
+        joinedload(WorkEntry.site)
+    ).order_by(
         WorkEntry.id.desc()
     ).all()
 
